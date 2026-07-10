@@ -6,12 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.0] - 2025-10-30
+
+- manipulation CreateNewContextStateWithAssociation for contexts
+
+## [4.4.0] - 2025-07-03
+
 ### Added
 
 - manipulation SetSafetyClassificationToMedAMedBOrMedC for devices
 - manipulation SetMetricAvailabilityIntr for metrics
 - manipulation SetMetricCategoryMsrmtOrClc for metrics
 - manipulation SetMetricCategorySetOrPreset for metrics
+
+### Changed
+
+- gradle version to 8.14.2
+- adapt deploy process, switch from legacy OSSRH to Central Portal
 
 ### Removed
 
@@ -21,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - manipulation RemoveAllContextStateValidators for contexts
 - manipulation InsertMdsDescriptor for devices
 - manipulation RemoveMdsDescriptor for devices
+
+## [4.3.0]
+
+- this version is broken due to technical issues while migrating to Central Portal
 
 ## [4.2.0] - 2025-03-17
 

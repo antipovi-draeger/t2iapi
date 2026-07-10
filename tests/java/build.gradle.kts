@@ -26,8 +26,8 @@ dependencies {
     testImplementation("io.grpc:grpc-stub:${grpcVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.1")
     testImplementation("io.grpc:grpc-netty-shaded:${grpcVersion}")
-    testImplementation("com.draeger.medical.ti2api:t2iapi:${t2iapiVersion}")
     testImplementation("com.google.protobuf:protobuf-java-util:${protocVersion}")
+    testImplementation("com.draeger.medical:t2iapi:${t2iapiVersion}")
 }
 
 tasks.withType<Test> {
@@ -37,5 +37,4 @@ tasks.withType<Test> {
     }
     reports.junitXml.isEnabled = true
     reports.html.isEnabled = true
-    systemProperty("python.executable", System.getProperty("python.executable", "python"))
 }
