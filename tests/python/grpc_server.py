@@ -43,7 +43,7 @@ class IntegrationServiceServicer(service_pb2_grpc.IntegrationServiceServicer):
         raw = self._cases[received_rpc_call]
         expected = json_format.Parse(_build_json(received_rpc_call, raw), type(received)())
 
-        if received == expected:
+        if received != expected:
             self._validation_errors.append(
                 f"Mismatch for rpc call '{received_rpc_call}':\n"
                 f"expected: {str(expected).rstrip()}\n"
