@@ -5,7 +5,6 @@ on:
   push: # Apply to all branches
 
 env:
-  GRADLE_VERSION: 7.5.1
   RELEASE_VERSION: 0
 
 jobs:
@@ -60,6 +59,9 @@ jobs:
     steps:
       # Run `git checkout`
       - uses: actions/checkout@v4
+      - name: Source dependency versions
+        working-directory: config
+        run: cat versions.txt >> $GITHUB_ENV
       - name: Download t2iapi jar artifact
         uses: actions/download-artifact@v4
         with:

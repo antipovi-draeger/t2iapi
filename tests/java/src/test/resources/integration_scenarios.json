@@ -1,0 +1,56 @@
+[
+  {"rpcCall": "TestString_populated",              "expected": "some-handle-ref"},
+  {"rpcCall": "TestString_empty",                  "expected": ""},
+  {"rpcCall": "TestString_not_present"},
+  {"rpcCall": "TestString_null",                   "expected": null},
+
+  {"rpcCall": "TestBool_true",                     "expected": true},
+  {"rpcCall": "TestBool_false",                    "expected": false},
+  {"rpcCall": "TestBool_not_present"},
+  {"rpcCall": "TestBool_null",                     "expected": null},
+
+  {"rpcCall": "TestUint32_populated",              "expected": 2},
+  {"rpcCall": "TestUint32_zero",                   "expected": 0},
+  {"rpcCall": "TestUint32_not_present"},
+  {"rpcCall": "TestUint32_null",                   "expected": null},
+
+  {"rpcCall": "TestEnum_populated",                "expected": "COMPATIBILITY_ENUM_VALUE_1"},
+  {"rpcCall": "TestEnum_default",                  "expected": "COMPATIBILITY_ENUM_VALUE_0"},
+  {"rpcCall": "TestEnum_not_present"},
+  {"rpcCall": "TestEnum_null",                     "expected": null},
+
+  {"rpcCall": "TestRepeatedString_populated",      "expected": ["handle-a", "handle-b", "handle-c"]},
+  {"rpcCall": "TestRepeatedString_empty",          "expected": []},
+  {"rpcCall": "TestRepeatedString_not_present"},
+  {"rpcCall": "TestRepeatedString_null",           "expected": null},
+
+  {"rpcCall": "TestRepeatedEnum_populated",        "expected": ["COMPATIBILITY_ENUM_VALUE_0", "COMPATIBILITY_ENUM_VALUE_1", "COMPATIBILITY_ENUM_VALUE_2"]},
+  {"rpcCall": "TestRepeatedEnum_empty",            "expected": []},
+  {"rpcCall": "TestRepeatedEnum_not_present"},
+  {"rpcCall": "TestRepeatedEnum_null",             "expected": null},
+
+  {"rpcCall": "TestRepeatedMessage_populated",     "expected": [
+    {"stringField": "some-root", "boolField": true, "optionalString": "some-extension"},
+    {"stringField": "other-root", "boolField": false}
+  ]},
+  {"rpcCall": "TestRepeatedMessage_empty",         "expected": []},
+  {"rpcCall": "TestRepeatedMessage_not_present"},
+  {"rpcCall": "TestRepeatedMessage_null",          "expected": null},
+
+  {"rpcCall": "TestMessage_populated",             "expected": {"stringField": "some-root", "boolField": true, "optionalString": "some-extension"}},
+  {"rpcCall": "TestMessage_not_present"},
+  {"rpcCall": "TestMessage_null",                  "expected": null},
+
+  {"rpcCall": "TestOptionalString_present",        "expected": "some-extension"},
+  {"rpcCall": "TestOptionalString_not_present"},
+  {"rpcCall": "TestOptionalString_null",           "expected": null},
+
+  {"rpcCall": "TestOptionalUint64_present",        "expected": "42"},
+  {"rpcCall": "TestOptionalUint64_not_present"},
+  {"rpcCall": "TestOptionalUint64_null",           "expected": null},
+
+  {"rpcCall": "TestDuration_populated",            "expected": "30s"},
+  {"rpcCall": "TestDuration_zero",                 "expected": "0s"},
+  {"rpcCall": "TestDuration_not_present"},
+  {"rpcCall": "TestDuration_null",                 "expected": null}
+]

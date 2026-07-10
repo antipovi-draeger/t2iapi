@@ -71,6 +71,28 @@ graph LR
   B --SDC--> A
 ```
 
+## Validating compatibility
+
+If you implement t2iapi in a language other than Java or Python, or if you build the
+package yourself using different versions of gRPC or protobuf than those released, we
+strongly recommend verifying that your implementation correctly serializes and deserializes
+all field types used by t2iapi. The repository provides reference client and server
+implementations in Python together with test scenarios covering strings, booleans, uint32,
+enums, repeated fields, nested messages, optional wrapper types (`StringValue`, `UInt64Value`),
+and `Duration`.
+
+Generate stubs from `src/t2iapi/integration/service.proto`, then use the reference
+client or server from `tests/python/` against your own implementation, with
+`tests/java/src/test/resources/integration_scenarios.json` as test data:
+
+```mermaid
+# Run the reference client against your server
+python grpc_client.py <your_server_address> <path/to/integration_scenarios.json>
+
+# Run the reference server for your client to connect to
+python grpc_server.py <path/to/integration_scenarios.json>
+```
+
 ## Workflow
 Changes to t2iapi are guided by requirements of Dräger test tools, including [SDCcc](https://github.com/Draegerwerk/sdccc).
 As such, they are only done by Dräger employees.

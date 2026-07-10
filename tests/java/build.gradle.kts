@@ -13,6 +13,7 @@ val configFile = File("../../config/versions.txt").readLines()
 val configFileMap = configFile.associate { it.split("=")[0] to it.split("=")[1] }
 
 val grpcVersion = configFileMap["JAVA_GRPC_VERSION"]
+val protocVersion = configFileMap["JAVA_PROTOC_VERSION"]
 val baseVersion = configFileMap["BASE_PACKAGE_VERSION"]!!
 val buildId: String? = System.getenv("GITHUB_RUN_NUMBER")
 val t2iapiVersion: String = when (System.getenv("RELEASE_VERSION") == "1") {
@@ -26,6 +27,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.1")
     testImplementation("io.grpc:grpc-netty-shaded:${grpcVersion}")
     testImplementation("com.draeger.medical.ti2api:t2iapi:${t2iapiVersion}")
+    testImplementation("com.google.protobuf:protobuf-java-util:${protocVersion}")
 }
 
 tasks.withType<Test> {
@@ -35,4 +37,5 @@ tasks.withType<Test> {
     }
     reports.junitXml.isEnabled = true
     reports.html.isEnabled = true
+    systemProperty("python.executable", System.getProperty("python.executable", "python"))
 }

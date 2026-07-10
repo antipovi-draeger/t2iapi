@@ -1,0 +1,179 @@
+/*
+This Source Code Form is subject to the terms of the MIT License.
+Copyright (c) 2026 Draegerwerk AG & Co. KGaA.
+
+SPDX-License-Identifier: MIT
+*/
+
+syntax = "proto3";
+
+package t2iapi.integration;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_package = "com.draeger.medical.t2iapi.integration";
+option java_outer_classname = "IntegrationServiceProto";
+
+/*
+Enum used to cover the enum field type in integration tests.
+*/
+enum CompatibilityEnum {
+    COMPATIBILITY_ENUM_VALUE_0 = 0;
+    COMPATIBILITY_ENUM_VALUE_1 = 1;
+    COMPATIBILITY_ENUM_VALUE_2 = 2;
+}
+
+/*
+Nested message used in message and repeated-message test cases.
+Covers nested string, bool, and StringValue fields.
+*/
+message NestedMsg {
+    string string_field = 1;
+    bool bool_field = 2;
+    google.protobuf.StringValue optional_string = 3;
+}
+
+/*
+Test case for the string field type.
+The rpc_call identifies the scenario and is derived from the rpcCall prefix in the JSON file.
+*/
+message StringCase {
+    string rpc_call = 1;
+    string expected = 2;
+}
+
+/*
+Test case for the bool field type.
+*/
+message BoolCase {
+    string rpc_call = 1;
+    bool expected = 2;
+}
+
+/*
+Test case for the uint32 field type.
+*/
+message Uint32Case {
+    string rpc_call = 1;
+    uint32 expected = 2;
+}
+
+/*
+Test case for the enum field type.
+*/
+message EnumCase {
+    string rpc_call = 1;
+    CompatibilityEnum expected = 2;
+}
+
+/*
+Test case for the repeated string field type.
+*/
+message RepeatedStringCase {
+    string rpc_call = 1;
+    repeated string expected = 2;
+}
+
+/*
+Test case for the repeated enum field type.
+*/
+message RepeatedEnumCase {
+    string rpc_call = 1;
+    repeated CompatibilityEnum expected = 2;
+}
+
+/*
+Test case for the repeated message field type.
+*/
+message RepeatedMessageCase {
+    string rpc_call = 1;
+    repeated NestedMsg expected = 2;
+}
+
+/*
+Test case for the nested message field type.
+*/
+message MessageCase {
+    string rpc_call = 1;
+    NestedMsg expected = 2;
+}
+
+/*
+Test case for the google.protobuf.StringValue field type (presence check).
+*/
+message OptionalStringCase {
+    string rpc_call = 1;
+    google.protobuf.StringValue expected = 2;
+}
+
+/*
+Test case for the google.protobuf.UInt64Value field type (presence check).
+*/
+message OptionalUint64Case {
+    string rpc_call = 1;
+    google.protobuf.UInt64Value expected = 2;
+}
+
+/*
+Test case for the google.protobuf.Duration field type.
+*/
+message DurationCase {
+    string rpc_call = 1;
+    google.protobuf.Duration expected = 2;
+}
+
+/*
+Service for integration testing between Python and Java implementations of t2iapi.
+Each RPC covers one field type used across t2iapi to verify correct serialization
+and deserialization across language and version boundaries.
+The server runs inside a unit test that asserts the validation_errors list is empty
+after all RPCs have been called; no response payload is needed.
+*/
+service IntegrationService {
+    /*
+    Validates that a string field is correctly transmitted.
+    */
+    rpc TestString(StringCase) returns (google.protobuf.Empty);
+    /*
+    Validates that a bool field is correctly transmitted.
+    */
+    rpc TestBool(BoolCase) returns (google.protobuf.Empty);
+    /*
+    Validates that a uint32 field is correctly transmitted.
+    */
+    rpc TestUint32(Uint32Case) returns (google.protobuf.Empty);
+    /*
+    Validates that an enum field is correctly transmitted.
+    */
+    rpc TestEnum(EnumCase) returns (google.protobuf.Empty);
+    /*
+    Validates that a repeated string field is correctly transmitted.
+    */
+    rpc TestRepeatedString(RepeatedStringCase) returns (google.protobuf.Empty);
+    /*
+    Validates that a repeated enum field is correctly transmitted.
+    */
+    rpc TestRepeatedEnum(RepeatedEnumCase) returns (google.protobuf.Empty);
+    /*
+    Validates that a repeated message field is correctly transmitted.
+    */
+    rpc TestRepeatedMessage(RepeatedMessageCase) returns (google.protobuf.Empty);
+    /*
+    Validates that a nested message field is correctly transmitted.
+    */
+    rpc TestMessage(MessageCase) returns (google.protobuf.Empty);
+    /*
+    Validates that a google.protobuf.StringValue field is correctly transmitted (presence check).
+    */
+    rpc TestOptionalString(OptionalStringCase) returns (google.protobuf.Empty);
+    /*
+    Validates that a google.protobuf.UInt64Value field is correctly transmitted (presence check).
+    */
+    rpc TestOptionalUint64(OptionalUint64Case) returns (google.protobuf.Empty);
+    /*
+    Validates that a google.protobuf.Duration field is correctly transmitted.
+    */
+    rpc TestDuration(DurationCase) returns (google.protobuf.Empty);
+}

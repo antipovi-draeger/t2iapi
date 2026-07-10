@@ -5,7 +5,6 @@ on:
   push: # Apply to all branches
 
 env:
-  PYTHON_VERSION: 3.8
   PIP_VERSION: 22.0.4
   WHEEL_VERSION: 0.37.0
   HTML_TEST_RUNNER_VERSION: 1.2.1
@@ -54,6 +53,9 @@ jobs:
     needs: build-python
     steps:
       - uses: actions/checkout@v4
+      - name: Source dependency versions
+        working-directory: config
+        run: cat versions.txt >> $GITHUB_ENV
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
