@@ -1,0 +1,33 @@
+{
+  "cases": [
+    {
+      "testId": "all_types_populated",
+      "stringField": "test-handle",
+      "boolField": true,
+      "uint32Field": 42,
+      "enumField": "COMPATIBILITY_ENUM_VALUE_1",
+      "repeatedStringField": ["handle-1", "handle-2"],
+      "repeatedEnumField": ["COMPATIBILITY_ENUM_VALUE_0", "COMPATIBILITY_ENUM_VALUE_2"],
+      "repeatedMessageField": [
+        {"stringField": "nested-1", "boolField": false, "optionalString": "present"},
+        {"stringField": "nested-2", "boolField": true}
+      ],
+      "messageField": {"stringField": "msg-value", "boolField": true, "optionalString": "opt"},
+      "optionalString": "optional-value",
+      "optionalUint64": "12345"
+    },
+    {
+      "testId": "optional_fields_absent",
+      "stringField": "test-handle-2",
+      "boolField": true,
+      "uint32Field": 7,
+      "enumField": "COMPATIBILITY_ENUM_VALUE_2",
+      "repeatedStringField": ["only-one"],
+      "repeatedEnumField": ["COMPATIBILITY_ENUM_VALUE_1"],
+      "repeatedMessageField": [
+        {"stringField": "nested-only", "boolField": true}
+      ],
+      "messageField": {"stringField": "msg-2", "boolField": true}
+    }
+  ]
+}
