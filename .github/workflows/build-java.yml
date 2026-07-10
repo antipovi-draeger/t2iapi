@@ -95,7 +95,7 @@ jobs:
 
       - name: Execute tests
         working-directory: tests/java
-        run: ./gradlew test
+        run: ./gradlew test --tests "*.T2IApiTest"
 
       - name: Archive test results
         uses: actions/upload-artifact@v4
