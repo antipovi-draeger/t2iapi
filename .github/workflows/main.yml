@@ -14,3 +14,15 @@ jobs:
   integration-tests:
     needs: [build-java, build-python]
     uses: ./.github/workflows/integration-test.yml
+
+  deploy-java:
+    needs: [integration-tests]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+    uses: ./.github/workflows/deploy-java.yml
+    secrets: inherit
+
+  deploy-python:
+    needs: [integration-tests]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+    uses: ./.github/workflows/deploy-python.yml
+    secrets: inherit
