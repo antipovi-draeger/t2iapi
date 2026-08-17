@@ -1,0 +1,16 @@
+name: Build and Test
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  build-java:
+    uses: ./.github/workflows/build-java.yml
+
+  build-python:
+    uses: ./.github/workflows/build-python.yml
+
+  integration-tests:
+    needs: [build-java, build-python]
+    uses: ./.github/workflows/integration-test.yml
