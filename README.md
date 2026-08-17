@@ -89,7 +89,7 @@ Generate stubs from `src/t2iapi/integration/service.proto`, then use the referen
 client or server from `tests/python/` against your own implementation, with
 `tests/java/src/test/resources/integration_scenarios.json` as test data:
 
-```mermaid
+```bash
 # Run the reference client against your server
 python grpc_client.py <your_server_address> <path/to/integration_scenarios.json>
 
