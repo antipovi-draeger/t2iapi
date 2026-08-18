@@ -26,7 +26,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: target_jars
-          path: java/build/libs/
+          path: java/build
 
       - name: Set up Java for publishing to Maven Central Repository
         uses: actions/setup-java@v4
@@ -41,7 +41,7 @@ jobs:
 
       - name: Publish package
         working-directory: ./java
-        run: ./gradlew publish
+        run: ./gradlew publish -x jar -x sourcesJar -x javadocJar
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}

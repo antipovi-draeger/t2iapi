@@ -31,10 +31,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: ${{ env.GRADLE_VERSION }}
+          cache-read-only: false
 
       - name: Execute build
         working-directory: ./java
-        run: ./gradlew jar generatePomFileForMavenPublication
+        run: ./gradlew jar sourcesJar javadocJar generatePomFileForMavenPublication
 
       - name: Rename pom file for release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -46,8 +47,8 @@ jobs:
         working-directory: ./java/build/publications/maven
         run: mv pom-default.xml ./../../libs/t2iapi-${{ env.BASE_PACKAGE_VERSION }}.${{ github.run_number }}-SNAPSHOT.pom
 
-      - name: Archive built jars and pom
+      - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
           name: target_jars
-          path: java/build/libs
+          path: java/build

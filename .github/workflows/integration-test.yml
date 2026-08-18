@@ -54,7 +54,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: target_jars
-          path: java/build/libs/
+          path: java/build
 
       - name: Download t2iapi wheel artifact
         uses: actions/download-artifact@v4
