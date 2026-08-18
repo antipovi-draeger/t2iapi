@@ -35,6 +35,4 @@ tasks.withType<Test> {
     testLogging {
         events("passed", "skipped", "failed")
     }
-    reports.junitXml.isEnabled = true
-    reports.html.isEnabled = true
 }
