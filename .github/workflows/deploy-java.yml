@@ -50,6 +50,7 @@ jobs:
         working-directory: ./java
         run: ./gradlew jreleaserDeploy
         env:
+          JRELEASER_DRY_RUN: true
           JRELEASER_MAVENCENTRAL_STAGE: UPLOAD
           CENTRAL_PORTAL_USERNAME: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
           CENTRAL_PORTAL_TOKEN: ${{ secrets.CENTRAL_PORTAL_TOKEN }}
