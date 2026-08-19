@@ -10,7 +10,6 @@ syntax = "proto3";
 package t2iapi.integration;
 
 import "google/protobuf/duration.proto";
-import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
 option java_package = "com.draeger.medical.t2iapi.integration";
