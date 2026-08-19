@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 package com.draeger.medical.t2iapi;
 
+import com.draeger.medical.t2iapi.helpers.CommonFunctions;
 import com.draeger.medical.t2iapi.helpers.JavaGrpcServer;
 
 import org.junit.jupiter.api.Test;
@@ -16,8 +17,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /*
  * Python client -> Java server integration test.
@@ -25,27 +25,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Starts the Java grpc server in a background thread, spawns the Python client as a subprocess, waits for it
  * to complete, then asserts the server exited cleanly with no validation errors.
  *
- * For running locally add path to your python's ven e.g.
+ * For running locally add path to your python's venv e.g.
  * -Dpython.executable=/venv/Scripts/python.exe
  */
 class PythonClientJavaServerTest {
-
-    private static final String TEST_DATA_PATH = Path.of("src/test/resources/integration_scenarios.json")
-            .toAbsolutePath().normalize().toString();
 
     private static final String PYTHON_CLIENT_PY = Path.of("../python/grpc_client.py")
             .toAbsolutePath().normalize().toString();
 
     @Test
     void pythonClientIntegrationTest() throws Exception {
-        String pythonExe = System.getProperty("python.executable", "python");
+        String pythonExe = System.getProperty("python.executable");
+        assertNotNull(pythonExe, "python.executable system property must be set");
 
         List<String> validationErrors = new CopyOnWriteArrayList<>();
-        JavaGrpcServer server = new JavaGrpcServer(0, TEST_DATA_PATH, validationErrors);
+        JavaGrpcServer server = new JavaGrpcServer(0, CommonFunctions.TEST_DATA_PATH, validationErrors);
         try {
             int port = server.getPort();
             Process proc = new ProcessBuilder(pythonExe, PYTHON_CLIENT_PY,
-                    "localhost:" + port, TEST_DATA_PATH)
+                    "localhost:" + port, CommonFunctions.TEST_DATA_PATH.toString())
                     .inheritIO()
                     .start();
 

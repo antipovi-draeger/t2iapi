@@ -20,7 +20,7 @@ import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.RepeatedSt
 import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.StringCase;
 import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.Uint32Case;
 import com.google.gson.JsonElement;
-import com.google.protobuf.Empty;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.util.JsonFormat;
 
@@ -29,6 +29,7 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +38,10 @@ public class JavaGrpcServer {
 
     private final Server server;
 
-    public JavaGrpcServer(int port, String testdataPath, List<String> validationErrors) throws IOException {
+    /*
+       Start the integration gRPC server and validate received data.
+    */
+    public JavaGrpcServer(int port, Path testdataPath, List<String> validationErrors) throws IOException {
         Map<String, JsonElement> cases = CommonFunctions.load(testdataPath);
         server = ServerBuilder.forPort(port)
                 .addService(new IntegrationServiceImpl(cases, validationErrors))
@@ -65,17 +69,17 @@ public class JavaGrpcServer {
         }
 
         /*
-            Reconstructs the expected proto from stored JSON and records any mismatch.
+           Check received against the expected scenario return error on missmatch.
         */
-        @SuppressWarnings("unchecked")
-        private <T extends Message> void validate(String rpcCall, T received, T.Builder builder) {
+        private void validate(String rpcCall, Message received) {
             if (!cases.containsKey(rpcCall)) {
                 validationErrors.add("unknown rpcCall: '" + rpcCall + "'");
                 return;
             }
             try {
+                var builder = received.newBuilderForType();
                 JsonFormat.parser().merge(CommonFunctions.buildItemJson(rpcCall, cases.get(rpcCall)), builder);
-                T expected = (T) builder.build();
+                Message expected = builder.build();
                 if (!received.equals(expected)) {
                     validationErrors.add("Mismatch for '" + rpcCall + "':\n"
                             + "  expected: " + expected + "\n"
@@ -86,80 +90,113 @@ public class JavaGrpcServer {
             }
         }
 
+        /*
+           Merge the next scenario into builder.
+        */
+        private void buildResponse(String rpcCall, Message.Builder builder) {
+            try {
+                CommonFunctions.getExpectedResponseAndMerge(cases, rpcCall, builder);
+            } catch (InvalidProtocolBufferException e) {
+                validationErrors.add("Parse error building next response for '" + rpcCall + "': " + e.getMessage());
+            }
+        }
+
         @Override
-        public void testString(StringCase received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, StringCase.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testString(StringCase received, StreamObserver<StringCase> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = StringCase.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
 
         @Override
-        public void testBool(BoolCase received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, BoolCase.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testBool(BoolCase received, StreamObserver<BoolCase> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = BoolCase.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
 
         @Override
-        public void testUint32(Uint32Case received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, Uint32Case.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testUint32(Uint32Case received, StreamObserver<Uint32Case> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = Uint32Case.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
 
         @Override
-        public void testEnum(EnumCase received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, EnumCase.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testEnum(EnumCase received, StreamObserver<EnumCase> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = EnumCase.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
 
         @Override
-        public void testRepeatedString(RepeatedStringCase received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, RepeatedStringCase.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testRepeatedString(RepeatedStringCase received, StreamObserver<RepeatedStringCase> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = RepeatedStringCase.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
 
         @Override
-        public void testRepeatedEnum(RepeatedEnumCase received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, RepeatedEnumCase.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testRepeatedEnum(RepeatedEnumCase received, StreamObserver<RepeatedEnumCase> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = RepeatedEnumCase.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
 
         @Override
-        public void testRepeatedMessage(RepeatedMessageCase received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, RepeatedMessageCase.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testRepeatedMessage(RepeatedMessageCase received, StreamObserver<RepeatedMessageCase> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = RepeatedMessageCase.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
 
         @Override
-        public void testMessage(MessageCase received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, MessageCase.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testMessage(MessageCase received, StreamObserver<MessageCase> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = MessageCase.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
 
         @Override
-        public void testOptionalString(OptionalStringCase received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, OptionalStringCase.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testOptionalString(OptionalStringCase received, StreamObserver<OptionalStringCase> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = OptionalStringCase.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
 
         @Override
-        public void testOptionalUint64(OptionalUint64Case received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, OptionalUint64Case.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testOptionalUint64(OptionalUint64Case received, StreamObserver<OptionalUint64Case> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = OptionalUint64Case.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
 
         @Override
-        public void testDuration(DurationCase received, StreamObserver<Empty> responseObserver) {
-            validate(received.getRpcCall(), received, DurationCase.newBuilder());
-            responseObserver.onNext(Empty.getDefaultInstance());
+        public void testDuration(DurationCase received, StreamObserver<DurationCase> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = DurationCase.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
             responseObserver.onCompleted();
         }
     }

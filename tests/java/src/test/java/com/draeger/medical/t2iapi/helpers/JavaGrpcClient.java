@@ -8,24 +8,15 @@ SPDX-License-Identifier: MIT
 package com.draeger.medical.t2iapi.helpers;
 
 import com.draeger.medical.t2iapi.integration.IntegrationServiceGrpc;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.BoolCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.DurationCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.EnumCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.MessageCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.OptionalStringCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.OptionalUint64Case;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.RepeatedEnumCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.RepeatedMessageCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.RepeatedStringCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.StringCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.Uint32Case;
+import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.*;
 import com.google.gson.JsonElement;
 import com.google.protobuf.Message;
 import com.google.protobuf.util.JsonFormat;
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import org.junit.jupiter.api.Assertions;
 
+import java.nio.file.Path;
 import java.util.Map;
 
 public class JavaGrpcClient {
@@ -35,11 +26,15 @@ public class JavaGrpcClient {
             System.err.println("Usage: JavaIntegrationClient <server_address> <testdata_path>");
             System.exit(1);
         }
-        run(args[0], args[1]);
+        run(args[0], Path.of(args[1]));
     }
 
-    public static void run(String serverAddress, String testdataPath) throws Exception {
+    /*
+       Connect to Grpc server and send all test scenarios, assert no validation errors occurred.
+    */
+    public static void run(String serverAddress, Path testdataPath) throws Exception {
         Map<String, JsonElement> cases = CommonFunctions.load(testdataPath);
+        var responseResults = new StringBuilder();
 
         String[] parts = serverAddress.split(":", 2);
         String host = parts[0];
@@ -51,51 +46,93 @@ public class JavaGrpcClient {
         try {
             IntegrationServiceGrpc.IntegrationServiceBlockingStub stub =
                     IntegrationServiceGrpc.newBlockingStub(channel);
-            for (Map.Entry<String, JsonElement> entry : cases.entrySet()) {
-                send(stub, entry.getKey(), CommonFunctions.buildItemJson(entry.getKey(), entry.getValue()));
-            }
+            send(stub, cases, responseResults);
         } finally {
+            Assertions.assertTrue(responseResults.isEmpty(), responseResults.toString());
             channel.shutdown();
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T extends Message> T parse(String json, T.Builder builder) throws Exception {
-        JsonFormat.parser().merge(json, builder);
-        return (T) builder.build();
+    /*
+       Compare received against the next scenario in the scenario type group, return an error string or empty.
+    */
+    private static String validateResponse(
+            String rpcCall,
+            Message received,
+            Map<String, JsonElement> cases) {
+        try {
+            var builder = received.newBuilderForType();
+            CommonFunctions.getExpectedResponseAndMerge(cases, rpcCall, builder);
+            Message expected = builder.build();
+            if (!received.equals(expected)) {
+                return "Validation failed for rpcCall: " + rpcCall + "\nexpected: " + expected + "received: " +
+                        received;
+            }
+        } catch (Exception e) {
+            return "Error validating response for rpcCall: " + rpcCall + ". " + e.getMessage() + "\n";
+        }
+        return "";
     }
 
     /*
-        Sends the correct RPC based on the rpcCall prefix.
+       Dispatch all test scenarios and validate each response against the next scenario in its type group.
     */
     private static void send(
             IntegrationServiceGrpc.IntegrationServiceBlockingStub stub,
-            String rpcCall,
-            String itemJson) throws Exception {
-        if (rpcCall.startsWith("TestRepeatedString")) {
-            stub.testRepeatedString(parse(itemJson, RepeatedStringCase.newBuilder()));
-        } else if (rpcCall.startsWith("TestRepeatedEnum")) {
-            stub.testRepeatedEnum(parse(itemJson, RepeatedEnumCase.newBuilder()));
-        } else if (rpcCall.startsWith("TestRepeatedMessage")) {
-            stub.testRepeatedMessage(parse(itemJson, RepeatedMessageCase.newBuilder()));
-        } else if (rpcCall.startsWith("TestOptionalString")) {
-            stub.testOptionalString(parse(itemJson, OptionalStringCase.newBuilder()));
-        } else if (rpcCall.startsWith("TestOptionalUint64")) {
-            stub.testOptionalUint64(parse(itemJson, OptionalUint64Case.newBuilder()));
-        } else if (rpcCall.startsWith("TestString")) {
-            stub.testString(parse(itemJson, StringCase.newBuilder()));
-        } else if (rpcCall.startsWith("TestBool")) {
-            stub.testBool(parse(itemJson, BoolCase.newBuilder()));
-        } else if (rpcCall.startsWith("TestUint32")) {
-            stub.testUint32(parse(itemJson, Uint32Case.newBuilder()));
-        } else if (rpcCall.startsWith("TestEnum")) {
-            stub.testEnum(parse(itemJson, EnumCase.newBuilder()));
-        } else if (rpcCall.startsWith("TestMessage")) {
-            stub.testMessage(parse(itemJson, MessageCase.newBuilder()));
-        } else if (rpcCall.startsWith("TestDuration")) {
-            stub.testDuration(parse(itemJson, DurationCase.newBuilder()));
-        } else {
-            throw new IllegalArgumentException("No RPC mapped for rpcCall: '" + rpcCall + "'");
+            Map<String, JsonElement> cases,
+            StringBuilder errors) throws Exception {
+        for (Map.Entry<String, JsonElement> entry : cases.entrySet()) {
+            String rpcCall = entry.getKey();
+            String itemJson = CommonFunctions.buildItemJson(rpcCall, entry.getValue());
+            final Message result;
+            if (rpcCall.startsWith("TestRepeatedString")) {
+                var b = RepeatedStringCase.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testRepeatedString(b.build());
+            } else if (rpcCall.startsWith("TestRepeatedEnum")) {
+                var b = RepeatedEnumCase.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testRepeatedEnum(b.build());
+            } else if (rpcCall.startsWith("TestRepeatedMessage")) {
+                var b = RepeatedMessageCase.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testRepeatedMessage(b.build());
+            } else if (rpcCall.startsWith("TestOptionalString")) {
+                var b = OptionalStringCase.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testOptionalString(b.build());
+            } else if (rpcCall.startsWith("TestOptionalUint64")) {
+                var b = OptionalUint64Case.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testOptionalUint64(b.build());
+            } else if (rpcCall.startsWith("TestString")) {
+                var b = StringCase.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testString(b.build());
+            } else if (rpcCall.startsWith("TestBool")) {
+                var b = BoolCase.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testBool(b.build());
+            } else if (rpcCall.startsWith("TestUint32")) {
+                var b = Uint32Case.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testUint32(b.build());
+            } else if (rpcCall.startsWith("TestEnum")) {
+                var b = EnumCase.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testEnum(b.build());
+            } else if (rpcCall.startsWith("TestMessage")) {
+                var b = MessageCase.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testMessage(b.build());
+            } else if (rpcCall.startsWith("TestDuration")) {
+                var b = DurationCase.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testDuration(b.build());
+            } else {
+                throw new IllegalArgumentException("No RPC mapped for rpcCall: '" + rpcCall + "'");
+            }
+            errors.append(validateResponse(rpcCall, result, cases));
         }
     }
 }

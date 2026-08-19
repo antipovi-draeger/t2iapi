@@ -32,6 +32,7 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    System.getProperty("python.executable")?.let { systemProperty("python.executable", it) }
     testLogging {
         events("passed", "skipped", "failed")
     }

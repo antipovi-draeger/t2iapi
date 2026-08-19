@@ -135,45 +135,45 @@ service IntegrationService {
     /*
     Validates that a string field is correctly transmitted.
     */
-    rpc TestString(StringCase) returns (google.protobuf.Empty);
+    rpc TestString(StringCase) returns (StringCase);
     /*
     Validates that a bool field is correctly transmitted.
     */
-    rpc TestBool(BoolCase) returns (google.protobuf.Empty);
+    rpc TestBool(BoolCase) returns (BoolCase);
     /*
     Validates that a uint32 field is correctly transmitted.
     */
-    rpc TestUint32(Uint32Case) returns (google.protobuf.Empty);
+    rpc TestUint32(Uint32Case) returns (Uint32Case);
     /*
     Validates that an enum field is correctly transmitted.
     */
-    rpc TestEnum(EnumCase) returns (google.protobuf.Empty);
+    rpc TestEnum(EnumCase) returns (EnumCase);
     /*
     Validates that a repeated string field is correctly transmitted.
     */
-    rpc TestRepeatedString(RepeatedStringCase) returns (google.protobuf.Empty);
+    rpc TestRepeatedString(RepeatedStringCase) returns (RepeatedStringCase);
     /*
     Validates that a repeated enum field is correctly transmitted.
     */
-    rpc TestRepeatedEnum(RepeatedEnumCase) returns (google.protobuf.Empty);
+    rpc TestRepeatedEnum(RepeatedEnumCase) returns (RepeatedEnumCase);
     /*
     Validates that a repeated message field is correctly transmitted.
     */
-    rpc TestRepeatedMessage(RepeatedMessageCase) returns (google.protobuf.Empty);
+    rpc TestRepeatedMessage(RepeatedMessageCase) returns (RepeatedMessageCase);
     /*
     Validates that a nested message field is correctly transmitted.
     */
-    rpc TestMessage(MessageCase) returns (google.protobuf.Empty);
+    rpc TestMessage(MessageCase) returns (MessageCase);
     /*
     Validates that a google.protobuf.StringValue field is correctly transmitted (presence check).
     */
-    rpc TestOptionalString(OptionalStringCase) returns (google.protobuf.Empty);
+    rpc TestOptionalString(OptionalStringCase) returns (OptionalStringCase);
     /*
     Validates that a google.protobuf.UInt64Value field is correctly transmitted (presence check).
     */
-    rpc TestOptionalUint64(OptionalUint64Case) returns (google.protobuf.Empty);
+    rpc TestOptionalUint64(OptionalUint64Case) returns (OptionalUint64Case);
     /*
     Validates that a google.protobuf.Duration field is correctly transmitted.
     */
-    rpc TestDuration(DurationCase) returns (google.protobuf.Empty);
+    rpc TestDuration(DurationCase) returns (DurationCase);
 }

@@ -3,37 +3,27 @@
 # Copyright (c) 2026 Draegerwerk AG & Co. KGaA.
 # SPDX-License-Identifier: MIT
 
-"""
-Grpc server for cross-language integration testing.
-
-Loads test scenarios from a JSON file into {rpcCall: expected_value} at startup.
-For each incoming RPC the expected proto is reconstructed from the stored value
-and compared against the received message. Prints any mismatch.
-
-Intended to be invoked by PythonClientJavaServerTest.
-"""
+"""gRPC server for cross-language integration testing. Intended to be invoked by PythonClientJavaServerTest."""
 
 from concurrent import futures
 
 import grpc
-import json
-from google.protobuf import empty_pb2
 from google.protobuf import json_format
 
-from common import _build_json
+from common import _build_json, get_expected_response_and_merge, _load
 from t2iapi.integration import service_pb2_grpc
 
 
 class IntegrationServiceServicer(service_pb2_grpc.IntegrationServiceServicer):
-    """Validates incoming requests against expected data loaded from JSON."""
+    """Validates received requests and returns the next scenario as the response."""
 
     def __init__(self, testdata_path, validation_errors):
+        """Load scenarios from testdata_path, collect validation errors."""
         self._validation_errors = validation_errors
-        with open(testdata_path, 'r', encoding='utf-8') as f:
-            items = json.load(f)
-        self._cases = {item['rpcCall']: item.get('expected') for item in items}
+        self._cases = _load(testdata_path)
 
     def _validate(self, received):
+        """Check received against the stored expected scenario, append any mismatch."""
         received_rpc_call = received.rpc_call
 
         if received_rpc_call not in self._cases:
@@ -50,49 +40,57 @@ class IntegrationServiceServicer(service_pb2_grpc.IntegrationServiceServicer):
                 f"received: {str(received)}"
             )
 
+    def _build_next_response(self, received):
+        """Parse the next scenario into a new message instance."""
+        try:
+            return get_expected_response_and_merge(self._cases, received.rpc_call, type(received)())
+        except Exception as e:
+            self._validation_errors.append(f"Parse error building next response for '{received.rpc_call}': {e}")
+            return type(received)()
+
     def TestString(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
     def TestBool(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
     def TestUint32(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
     def TestEnum(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
     def TestRepeatedString(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
     def TestRepeatedEnum(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
     def TestRepeatedMessage(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
     def TestMessage(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
     def TestOptionalString(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
     def TestOptionalUint64(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
     def TestDuration(self, request, context):
         self._validate(request)
-        return empty_pb2.Empty()
+        return self._build_next_response(request)
 
 
 def start_server(testdata_path, validation_errors):

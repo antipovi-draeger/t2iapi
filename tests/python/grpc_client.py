@@ -3,28 +3,20 @@
 # Copyright (c) 2026 Draegerwerk AG & Co. KGaA.
 # SPDX-License-Identifier: MIT
 
-"""
-Grpc client for integration testing.
+"""gRPC client for cross-language integration testing. Intended to be invoked by JavaClientPythonServerTest."""
 
-Reads test scenarios from a JSON file into {rpcCall: expected_value}, dispatches
-each case to the matching RPC based on the rpcCall prefix, and exits 0.
-No assertions are performed here; the server owns the validation.
-
-Intended to be invoked by JavaClientPythonServerTest.
-"""
-
-import json
 import sys
 
 import grpc
 from google.protobuf import json_format
 
-from common import _build_json
+from common import _build_json, _load
 from t2iapi.integration import service_pb2
 from t2iapi.integration import service_pb2_grpc
 
 
 def _send(stub, rpc_call, item_json):
+    """Dispatch rpc_call to the matching stub method."""
     if rpc_call.startswith('TestRepeatedString'):
         stub.TestRepeatedString(json_format.Parse(item_json, service_pb2.RepeatedStringCase()))
     elif rpc_call.startswith('TestRepeatedEnum'):
@@ -52,9 +44,8 @@ def _send(stub, rpc_call, item_json):
 
 
 def run(server_address, testdata_path):
-    with open(testdata_path, 'r', encoding='utf-8') as f:
-        items = json.load(f)
-    cases = {item['rpcCall']: item.get('expected') for item in items}
+    """Connect to server_address and send all test scenarios."""
+    cases = _load(testdata_path)
 
     with grpc.insecure_channel(server_address) as channel:
         stub = service_pb2_grpc.IntegrationServiceStub(channel)

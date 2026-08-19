@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 package com.draeger.medical.t2iapi;
 
+import com.draeger.medical.t2iapi.helpers.CommonFunctions;
 import com.draeger.medical.t2iapi.helpers.JavaGrpcClient;
 
 import org.junit.jupiter.api.Test;
@@ -31,18 +32,17 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class JavaClientPythonServerTest {
 
-    private static final String TEST_DATA_PATH = Path.of("src/test/resources/integration_scenarios.json")
-            .toAbsolutePath().normalize().toString();
-
     private static final String PYTHON_GRPC_SERVER_PY = Path.of("../python/grpc_server.py")
             .toAbsolutePath().normalize().toString();
 
     @Test
     void javaClientIntegrationTest() throws Exception {
-        String pythonExe = System.getProperty("python.executable", "python");
+        String pythonExe = System.getProperty("python.executable");
+        assertNotNull(pythonExe, "python.executable system property must be set");
 
-        Process serverProcess = new ProcessBuilder(pythonExe, PYTHON_GRPC_SERVER_PY, TEST_DATA_PATH)
-                .start();
+        Process serverProcess =
+                new ProcessBuilder(pythonExe, PYTHON_GRPC_SERVER_PY, CommonFunctions.TEST_DATA_PATH.toString())
+                        .start();
 
         List<String> stderrLines = new ArrayList<>();
         Thread stderrReader = new Thread(() -> {
@@ -62,11 +62,11 @@ class JavaClientPythonServerTest {
                 new InputStreamReader(serverProcess.getInputStream()))) {
             String portLine = stdout.readLine();
 
-            assertNotNull(portLine, "Python server did not print a port — stderr:\n"
+            assertNotNull(portLine, "Python server did not print a port - stderr:\n"
                     + String.join("\n", stderrLines));
 
             int port = Integer.parseInt(portLine.trim());
-            JavaGrpcClient.run("localhost:" + port, TEST_DATA_PATH);
+            JavaGrpcClient.run("localhost:" + port, CommonFunctions.TEST_DATA_PATH);
         }
 
         serverProcess.getOutputStream().close();
