@@ -1,0 +1,25 @@
+/*
+This Source Code Form is subject to the terms of the MIT License.
+Copyright (c) 2026 Draegerwerk AG & Co. KGaA.
+
+SPDX-License-Identifier: MIT
+*/
+
+syntax = "proto3";
+
+package t2iapi.operation;
+
+import "t2iapi/basic_responses.proto";
+import "t2iapi/operation/types.proto";
+
+option java_package = "com.draeger.medical.t2iapi.operation";
+option java_outer_classname = "OperationResponses";
+
+/*
+Response containing tuples of an operation transaction identifier as well as
+the respective SequenceId of the identifier.
+*/
+message OperationTransactionIdentifierResponse {
+    BasicResponse status = 1;
+    repeated TransactionIdSequenceIdTuple transactionid_sequenceid_tuples = 2;
+}
