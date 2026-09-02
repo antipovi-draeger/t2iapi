@@ -6,10 +6,14 @@
 """Shared utilities for grpc_client and grpc_server."""
 
 import json
+import pathlib
 
 from google.protobuf import json_format
 
 _NO_EXPECTED = '_not_present'
+
+DEFAULT_TEST_DATA_PATH = (pathlib.Path(__file__).resolve().parent.parent
+                          / 'java' / 'src' / 'test' / 'resources' / 'integration_scenarios.json')
 
 
 def _load(testdata_path):

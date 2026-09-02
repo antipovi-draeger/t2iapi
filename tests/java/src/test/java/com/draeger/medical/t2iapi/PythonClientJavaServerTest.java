@@ -13,8 +13,9 @@ import com.draeger.medical.t2iapi.helpers.JavaGrpcServer;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,7 +39,7 @@ class PythonClientJavaServerTest {
         String pythonExe = System.getProperty("python.executable");
         assertNotNull(pythonExe, "python.executable system property must be set");
 
-        List<String> validationErrors = new CopyOnWriteArrayList<>();
+        List<String> validationErrors = Collections.synchronizedList(new ArrayList<>());
         JavaGrpcServer server = new JavaGrpcServer(0, CommonFunctions.TEST_DATA_PATH, validationErrors);
         try {
             int port = server.getPort();

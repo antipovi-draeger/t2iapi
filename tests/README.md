@@ -6,19 +6,42 @@ If you implement t2iapi in a language other than Java or Python, or if you build
 package yourself using different versions of gRPC or protobuf than those released, we
 strongly recommend verifying that your implementation correctly serializes and deserializes
 all field types used by t2iapi. The repository provides reference client and server
-implementations in Python together with test scenarios covering all field types used by t2iapi.
+implementations in both Python and Java together with test scenarios covering all field
+types used by t2iapi.
 
 Generate stubs from `src/t2iapi/integration/service.proto`, then use the reference
-client or server from `tests/python/` against your own implementation, with
-`tests/java/src/test/resources/integration_scenarios.json` as test data:
+client or server against your own implementation, with
+`tests/java/src/test/resources/integration_scenarios.json` as test data.
+
+**Python** (`tests/python/`):
+
+Run from the `tests/python/` directory with the t2iapi package installed.
+Both arguments are optional: port defaults to a random free port, testdata defaults to
+`tests/java/src/test/resources/integration_scenarios.json`.
 
 ```bash
-# Run the reference client against your server
-python grpc_client.py <your_server_address> <path/to/integration_scenarios.json>
+# Run the reference Python client against your server
+python grpc_client.py <your_server_address> <optional/path/to/integration_scenarios.json>
 
-# Run the reference server for your client to connect to
-python grpc_server.py <path/to/integration_scenarios.json>
+# Run the reference Python server for your client to connect to
+python grpc_server.py <optional_port> <optional/path/to/integration_scenarios.json>
 ```
+
+**Java** (`tests/java/`):
+
+Run from the `tests/java/` directory.
+Both arguments are optional: port defaults to a random free port, testdata defaults to
+`src/test/resources/integration_scenarios.json` inside the `tests/java/`.
+
+```bash
+# Run the reference Java client against your server
+./gradlew runJavaClient -Pserver=<your_server_address> -Ptestdata=<optional/path/to/integration_scenarios.json>
+
+# Run the reference Java server for your client to connect to
+./gradlew runJavaServer -Pport=<optional_port>  -Ptestdata=<optional/path/to/integration_scenarios.json>
+```
+
+Both servers print the bound port to stdout once ready, then run until stdin is closed.
 
 ## Automated cross-language tests
 

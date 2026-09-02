@@ -41,13 +41,12 @@ class JavaClientPythonServerTest {
         assertNotNull(pythonExe, "python.executable system property must be set");
 
         Process serverProcess =
-                new ProcessBuilder(pythonExe, PYTHON_GRPC_SERVER_PY, CommonFunctions.TEST_DATA_PATH.toString())
+                new ProcessBuilder(pythonExe, PYTHON_GRPC_SERVER_PY, "0", CommonFunctions.TEST_DATA_PATH.toString())
                         .start();
 
         List<String> stderrLines = new ArrayList<>();
         Thread stderrReader = new Thread(() -> {
-            try (BufferedReader r = new BufferedReader(
-                    new InputStreamReader(serverProcess.getErrorStream()))) {
+            try (BufferedReader r = serverProcess.errorReader()) {
                 String line;
                 while ((line = r.readLine()) != null) {
                     stderrLines.add(line);
@@ -58,8 +57,7 @@ class JavaClientPythonServerTest {
         stderrReader.setDaemon(true);
         stderrReader.start();
 
-        try (BufferedReader stdout = new BufferedReader(
-                new InputStreamReader(serverProcess.getInputStream()))) {
+        try (BufferedReader stdout = serverProcess.inputReader()) {
             String portLine = stdout.readLine();
 
             assertNotNull(portLine, "Python server did not print a port - stderr:\n"

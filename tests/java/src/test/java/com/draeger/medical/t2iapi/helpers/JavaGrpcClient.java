@@ -26,7 +26,10 @@ public class JavaGrpcClient {
             System.err.println("Usage: JavaIntegrationClient <server_address> <testdata_path>");
             System.exit(1);
         }
-        run(args[0], Path.of(args[1]));
+        var serverAddress = args[0];
+        var testdataPath = Path.of(args[1]);
+
+        run(serverAddress, testdataPath);
     }
 
     /*

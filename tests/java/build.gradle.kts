@@ -30,6 +30,25 @@ dependencies {
     testImplementation("com.draeger.medical:t2iapi:${t2iapiVersion}")
 }
 
+tasks.register<JavaExec>("runJavaServer") {
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("com.draeger.medical.t2iapi.helpers.JavaGrpcServer")
+    val port = project.findProperty("port")?.toString() ?: "0"
+    val testdata = project.findProperty("testdata")?.toString()
+        ?: "src/test/resources/integration_scenarios.json"
+    args = listOf(port, testdata)
+    standardInput = System.`in`
+}
+
+tasks.register<JavaExec>("runJavaClient") {
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("com.draeger.medical.t2iapi.helpers.JavaGrpcClient")
+    val server = project.findProperty("server")?.toString()
+    val testdata = project.findProperty("testdata")?.toString()
+        ?: "src/test/resources/integration_scenarios.json"
+    args = listOf(server, testdata)
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     System.getProperty("python.executable")?.let { systemProperty("python.executable", it) }

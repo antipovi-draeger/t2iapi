@@ -4,13 +4,13 @@
 # SPDX-License-Identifier: MIT
 
 """gRPC server for cross-language integration testing. Intended to be invoked by PythonClientJavaServerTest."""
-
-from concurrent import futures
-
 import grpc
+import pathlib
+import typing
+from concurrent import futures
 from google.protobuf import json_format
 
-from common import _build_json, get_expected_response_and_merge, _load
+from common import _build_json, get_expected_response_and_merge, _load, DEFAULT_TEST_DATA_PATH
 from t2iapi.integration import service_pb2_grpc
 
 
@@ -93,14 +93,14 @@ class IntegrationServiceServicer(service_pb2_grpc.IntegrationServiceServicer):
         return self._build_next_response(request)
 
 
-def start_server(testdata_path, validation_errors):
-    """Start the integration server on a random port. Returns (server, port)."""
+def start_server(validation_errors, testdata_path, server_port='0'):
+    """Start the integration server on a provided port, use a random port if not provided. Return (server, port)."""
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
     service_pb2_grpc.add_IntegrationServiceServicer_to_server(
         IntegrationServiceServicer(testdata_path, validation_errors),
-        server,
+        server
     )
-    port = server.add_insecure_port('localhost:0')
+    port = server.add_insecure_port(f'localhost:{server_port}')
     server.start()
     return server, port
 
@@ -108,10 +108,18 @@ def start_server(testdata_path, validation_errors):
 if __name__ == '__main__':
     import sys
 
+    if len(sys.argv) > 3:
+        print(f"Usage: {sys.argv[0]} [port] [testdata_path]", file=sys.stderr)
+        sys.exit(1)
+
     _validation_errors = []
-    _server, _port = start_server(sys.argv[1], _validation_errors)
+    _server_port = sys.argv[1] if len(sys.argv) >= 2 else '0'
+    _testdata_path = pathlib.Path(sys.argv[2]) if len(sys.argv) == 3 else DEFAULT_TEST_DATA_PATH
+
+    _server, _port = start_server(validation_errors=_validation_errors, testdata_path=_testdata_path,
+                                  server_port=_server_port)
     print(_port, flush=True)
-    sys.stdin.read()
+    sys.stdin.readline()
     _server.stop(grace=5).wait()
     for _err in _validation_errors:
         print(_err, file=sys.stderr)

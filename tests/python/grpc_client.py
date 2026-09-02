@@ -5,11 +5,11 @@
 
 """gRPC client for cross-language integration testing. Intended to be invoked by JavaClientPythonServerTest."""
 
-import sys
-
 import grpc
+import sys
 from google.protobuf import json_format
 
+from common import DEFAULT_TEST_DATA_PATH
 from common import _build_json, _load
 from t2iapi.integration import service_pb2
 from t2iapi.integration import service_pb2_grpc
@@ -54,7 +54,10 @@ def run(server_address, testdata_path):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <server_address> <testdata_path>", file=sys.stderr)
+    if len(sys.argv) != 2:
+        print(f"Usage: {sys.argv[0]} <server> [testdata_path]", file=sys.stderr)
         sys.exit(1)
-    run(sys.argv[1], sys.argv[2])
+    server_address = sys.argv[1]
+    testdata_path = sys.argv[2] if len(sys.argv) == 3 else DEFAULT_TEST_DATA_PATH
+
+    run(server_address, testdata_path)

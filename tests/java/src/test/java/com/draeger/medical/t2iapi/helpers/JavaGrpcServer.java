@@ -36,6 +36,26 @@ import java.util.concurrent.TimeUnit;
 
 public class JavaGrpcServer {
 
+    public static void main(String[] args) throws Exception {
+        if (args.length > 2) {
+            System.err.println("Usage: JavaGrpcServer [port] [testdata_path]");
+            System.exit(1);
+        }
+        int port = args.length >= 1 ? Integer.parseInt(args[0]) : 0;
+        Path testdataPath = args.length >= 2
+                ? Path.of(args[1])
+                : Path.of("src/test/resources/integration_scenarios.json").toAbsolutePath().normalize();
+
+        List<String> validationErrors = new java.util.ArrayList<>();
+        JavaGrpcServer server = new JavaGrpcServer(port, testdataPath, validationErrors);
+        System.out.println(server.getPort());
+        System.out.flush();
+        System.in.read();
+        server.stop();
+        validationErrors.forEach(System.err::println);
+        System.exit(validationErrors.isEmpty() ? 0 : 1);
+    }
+
     private final Server server;
 
     /*
