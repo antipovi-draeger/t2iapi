@@ -12,6 +12,7 @@ import com.draeger.medical.t2iapi.helpers.JavaGrpcServer;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,13 +46,26 @@ class PythonClientJavaServerTest {
             int port = server.getPort();
             Process proc = new ProcessBuilder(pythonExe, PYTHON_CLIENT_PY,
                     "localhost:" + port, CommonFunctions.TEST_DATA_PATH.toString())
-                    .inheritIO()
                     .start();
 
+            List<String> stderrLines = new ArrayList<>();
+            Thread stderrReader = new Thread(() -> {
+                try (BufferedReader r = proc.errorReader()) {
+                    String line;
+                    while ((line = r.readLine()) != null) {
+                        stderrLines.add(line);
+                    }
+                } catch (Exception ignored) {
+                }
+            });
+            stderrReader.setDaemon(true);
+            stderrReader.start();
+
             boolean finished = proc.waitFor(30, TimeUnit.SECONDS);
+            stderrReader.join(5000);
             assertTrue(finished, "Python client subprocess timed out after 30 seconds");
             assertEquals(0, proc.exitValue(),
-                    "Python client subprocess exited with non-zero code: " + proc.exitValue());
+                    "Python client subprocess failed:\n" + String.join("\n", stderrLines));
             assertTrue(validationErrors.isEmpty(),
                     "Server validation errors:\n" + String.join("\n", validationErrors));
         } finally {

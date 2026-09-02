@@ -51,6 +51,9 @@ tasks.register<JavaExec>("runJavaClient") {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    inputs.files(fileTree("../python") { include("**/*.py") })
+        .withPropertyName("pythonReferenceImplementation")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     System.getProperty("python.executable")?.let { systemProperty("python.executable", it) }
     testLogging {
         events("passed", "skipped", "failed")

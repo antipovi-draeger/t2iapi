@@ -10,54 +10,77 @@ import sys
 from google.protobuf import json_format
 
 from common import DEFAULT_TEST_DATA_PATH
-from common import _build_json, _load
+from common import build_json, load_testdata
 from t2iapi.integration import service_pb2
 from t2iapi.integration import service_pb2_grpc
 
 
-def _send(stub, rpc_call, item_json):
-    """Dispatch rpc_call to the matching stub method."""
+def _validate(cases, received):
+    """Return an error string if received does not match its scenario in cases, else empty string."""
+    received_rpc_call = received.rpc_call
+    if received_rpc_call not in cases:
+        return f"Unknown rpcCall in response: '{received_rpc_call}'"
+    try:
+        expected = json_format.Parse(build_json(received_rpc_call, cases[received_rpc_call]), type(received)())
+        if received != expected:
+            return (f"Validation failed for rpcCall: '{received_rpc_call}'\n"
+                    f"expected: {str(expected).rstrip()}\n"
+                    f"received: {str(received)}")
+    except Exception as e:
+        return f"Error validating response for rpcCall: '{received_rpc_call}': {e}"
+    return ""
+
+
+def _send_and_validate_response(stub, cases, rpc_call, item_json):
+    """Dispatch rpc_call to the matching stub method, validate the response, and return any error string."""
     if rpc_call.startswith('TestRepeatedString'):
-        stub.TestRepeatedString(json_format.Parse(item_json, service_pb2.RepeatedStringCase()))
+        response = stub.TestRepeatedString(json_format.Parse(item_json, service_pb2.RepeatedStringCase()))
     elif rpc_call.startswith('TestRepeatedEnum'):
-        stub.TestRepeatedEnum(json_format.Parse(item_json, service_pb2.RepeatedEnumCase()))
+        response = stub.TestRepeatedEnum(json_format.Parse(item_json, service_pb2.RepeatedEnumCase()))
     elif rpc_call.startswith('TestRepeatedMessage'):
-        stub.TestRepeatedMessage(json_format.Parse(item_json, service_pb2.RepeatedMessageCase()))
+        response = stub.TestRepeatedMessage(json_format.Parse(item_json, service_pb2.RepeatedMessageCase()))
     elif rpc_call.startswith('TestOptionalString'):
-        stub.TestOptionalString(json_format.Parse(item_json, service_pb2.OptionalStringCase()))
+        response = stub.TestOptionalString(json_format.Parse(item_json, service_pb2.OptionalStringCase()))
     elif rpc_call.startswith('TestOptionalUint64'):
-        stub.TestOptionalUint64(json_format.Parse(item_json, service_pb2.OptionalUint64Case()))
+        response = stub.TestOptionalUint64(json_format.Parse(item_json, service_pb2.OptionalUint64Case()))
     elif rpc_call.startswith('TestString'):
-        stub.TestString(json_format.Parse(item_json, service_pb2.StringCase()))
+        response = stub.TestString(json_format.Parse(item_json, service_pb2.StringCase()))
     elif rpc_call.startswith('TestBool'):
-        stub.TestBool(json_format.Parse(item_json, service_pb2.BoolCase()))
+        response = stub.TestBool(json_format.Parse(item_json, service_pb2.BoolCase()))
     elif rpc_call.startswith('TestUint32'):
-        stub.TestUint32(json_format.Parse(item_json, service_pb2.Uint32Case()))
+        response = stub.TestUint32(json_format.Parse(item_json, service_pb2.Uint32Case()))
     elif rpc_call.startswith('TestEnum'):
-        stub.TestEnum(json_format.Parse(item_json, service_pb2.EnumCase()))
+        response = stub.TestEnum(json_format.Parse(item_json, service_pb2.EnumCase()))
     elif rpc_call.startswith('TestMessage'):
-        stub.TestMessage(json_format.Parse(item_json, service_pb2.MessageCase()))
+        response = stub.TestMessage(json_format.Parse(item_json, service_pb2.MessageCase()))
     elif rpc_call.startswith('TestDuration'):
-        stub.TestDuration(json_format.Parse(item_json, service_pb2.DurationCase()))
+        response = stub.TestDuration(json_format.Parse(item_json, service_pb2.DurationCase()))
     else:
         raise ValueError(f"No RPC mapped for rpcCall: '{rpc_call}'")
+    return _validate(cases, response)
 
 
 def run(server_address, testdata_path):
-    """Connect to server_address and send all test scenarios."""
-    cases = _load(testdata_path)
+    """Connect to server_address, send all test scenarios, and raise on any validation error."""
+    cases = load_testdata(testdata_path)
+    errors = []
 
     with grpc.insecure_channel(server_address) as channel:
         stub = service_pb2_grpc.IntegrationServiceStub(channel)
         for rpc_call, raw in cases.items():
-            _send(stub, rpc_call, _build_json(rpc_call, raw))
+            error = _send_and_validate_response(stub, cases, rpc_call, build_json(rpc_call, raw))
+            if error:
+                errors.append(error)
+
+    if errors:
+        raise AssertionError("\n".join(errors))
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print(f"Usage: {sys.argv[0]} <server> [testdata_path]", file=sys.stderr)
         sys.exit(1)
-    server_address = sys.argv[1]
-    testdata_path = sys.argv[2] if len(sys.argv) == 3 else DEFAULT_TEST_DATA_PATH
+    _server_address = sys.argv[1]
+    _testdata_path = sys.argv[2] if len(sys.argv) == 3 else DEFAULT_TEST_DATA_PATH
 
-    run(server_address, testdata_path)
+    run(_server_address, _testdata_path)

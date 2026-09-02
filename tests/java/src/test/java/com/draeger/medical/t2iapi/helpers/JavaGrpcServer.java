@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class JavaGrpcServer {
-
+    
     public static void main(String[] args) throws Exception {
         if (args.length > 2) {
             System.err.println("Usage: JavaGrpcServer [port] [testdata_path]");

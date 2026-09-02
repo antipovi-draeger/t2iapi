@@ -58,12 +58,7 @@ class JavaClientPythonServerTest {
         stderrReader.start();
 
         try (BufferedReader stdout = serverProcess.inputReader()) {
-            String portLine = stdout.readLine();
-
-            assertNotNull(portLine, "Python server did not print a port - stderr:\n"
-                    + String.join("\n", stderrLines));
-
-            int port = Integer.parseInt(portLine.trim());
+            String port = stdout.readLine().trim();
             JavaGrpcClient.run("localhost:" + port, CommonFunctions.TEST_DATA_PATH);
         }
 

@@ -10,7 +10,7 @@ import typing
 from concurrent import futures
 from google.protobuf import json_format
 
-from common import _build_json, get_expected_response_and_merge, _load, DEFAULT_TEST_DATA_PATH
+from common import build_json, get_expected_response_and_merge, load_testdata, DEFAULT_TEST_DATA_PATH
 from t2iapi.integration import service_pb2_grpc
 
 
@@ -20,7 +20,7 @@ class IntegrationServiceServicer(service_pb2_grpc.IntegrationServiceServicer):
     def __init__(self, testdata_path, validation_errors):
         """Load scenarios from testdata_path, collect validation errors."""
         self._validation_errors = validation_errors
-        self._cases = _load(testdata_path)
+        self._cases = load_testdata(testdata_path)
 
     def _validate(self, received):
         """Check received against the stored expected scenario, append any mismatch."""
@@ -31,7 +31,7 @@ class IntegrationServiceServicer(service_pb2_grpc.IntegrationServiceServicer):
             return
 
         raw = self._cases[received_rpc_call]
-        expected = json_format.Parse(_build_json(received_rpc_call, raw), type(received)())
+        expected = json_format.Parse(build_json(received_rpc_call, raw), type(received)())
 
         if received != expected:
             self._validation_errors.append(

@@ -16,7 +16,7 @@ DEFAULT_TEST_DATA_PATH = (pathlib.Path(__file__).resolve().parent.parent
                           / 'java' / 'src' / 'test' / 'resources' / 'integration_scenarios.json')
 
 
-def _load(testdata_path):
+def load_testdata(testdata_path):
     """Parse the scenarios JSON and return {rpcCall: raw_expected} for every scenario."""
     with open(testdata_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
@@ -27,7 +27,7 @@ def _load(testdata_path):
     return cases
 
 
-def _build_json(rpc_call, raw):
+def build_json(rpc_call, raw):
     """Build proto3 JSON; omits expected for _not_present, sets null for _null."""
     if rpc_call.endswith(_NO_EXPECTED):
         return json.dumps({'rpcCall': rpc_call})
@@ -43,4 +43,4 @@ def get_expected_response_and_merge(cases, rpc_call, msg):
     idx = group.index(rpc_call) if rpc_call in group else -1
     assert idx >= 0, f"No next key found for {rpc_call}, this should not happen."
     next_key = group[(idx + 1) % len(group)]
-    return json_format.Parse(_build_json(next_key, cases[next_key]), msg)
+    return json_format.Parse(build_json(next_key, cases[next_key]), msg)
