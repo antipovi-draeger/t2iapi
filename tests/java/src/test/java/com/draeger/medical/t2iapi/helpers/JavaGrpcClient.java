@@ -19,15 +19,20 @@ import org.junit.jupiter.api.Assertions;
 import java.nio.file.Path;
 import java.util.Map;
 
+import static com.draeger.medical.t2iapi.helpers.CommonFunctions.TEST_DATA_PATH;
+
 public class JavaGrpcClient {
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
+        if (args.length < 1) {
             System.err.println("Usage: JavaIntegrationClient <server_address> <testdata_path>");
             System.exit(1);
         }
         var serverAddress = args[0];
-        var testdataPath = Path.of(args[1]);
+        var testdataPath = TEST_DATA_PATH;
+        if (args.length == 2) {
+            testdataPath = Path.of(args[1]);
+        }
 
         run(serverAddress, testdataPath);
     }
@@ -132,6 +137,10 @@ public class JavaGrpcClient {
                 var b = DurationCase.newBuilder();
                 JsonFormat.parser().merge(itemJson, b);
                 result = stub.testDuration(b.build());
+            } else if (rpcCall.startsWith("TestDeepNestedMessage")) {
+                var b = DeepNestedCase.newBuilder();
+                JsonFormat.parser().merge(itemJson, b);
+                result = stub.testDeepNestedMessage(b.build());
             } else {
                 throw new IllegalArgumentException("No RPC mapped for rpcCall: '" + rpcCall + "'");
             }

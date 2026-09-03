@@ -92,6 +92,10 @@ class IntegrationServiceServicer(service_pb2_grpc.IntegrationServiceServicer):
         self._validate(request)
         return self._build_next_response(request)
 
+    def TestDeepNestedMessage(self, request, context):
+        self._validate(request)
+        return self._build_next_response(request)
+
 
 def start_server(validation_errors, testdata_path, server_port='0'):
     """Start the integration server on a provided port, use a random port if not provided. Return (server, port)."""

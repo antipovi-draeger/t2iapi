@@ -74,5 +74,28 @@
     {"suffix": "zero",        "expected": "0s"},
     {"suffix": "not_present"},
     {"suffix": "null",        "expected": null}
+  ],
+
+  "TestDeepNestedMessage": [
+    {"suffix": "populated",   "expected": {
+      "inner": [
+        {
+          "leaf": [
+            {"leafEnum": "LEAF_ENUM_VALUE_1", "version": "42", "status": {"result": "RESULT_SUCCESS"}},
+            {"leafEnum": "LEAF_ENUM_VALUE_0", "status": {"result": "RESULT_NOT_SUPPORTED"}},
+            {}
+          ],
+          "nested": {"stringField": "some-root", "boolField": true, "optionalString": "some-extension"}
+        },
+        {
+          "leaf": [],
+          "nested": {"stringField": "other-root", "boolField": false}
+        },
+        {}
+      ]
+    }},
+    {"suffix": "empty",       "expected": {}},
+    {"suffix": "not_present"},
+    {"suffix": "null",        "expected": null}
   ]
 }

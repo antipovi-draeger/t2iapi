@@ -9,6 +9,7 @@ package com.draeger.medical.t2iapi.helpers;
 
 import com.draeger.medical.t2iapi.integration.IntegrationServiceGrpc;
 import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.BoolCase;
+import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.DeepNestedCase;
 import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.DurationCase;
 import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.EnumCase;
 import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.MessageCase;
@@ -215,6 +216,15 @@ public class JavaGrpcServer {
         public void testDuration(DurationCase received, StreamObserver<DurationCase> responseObserver) {
             validate(received.getRpcCall(), received);
             var b = DurationCase.newBuilder();
+            buildResponse(received.getRpcCall(), b);
+            responseObserver.onNext(b.build());
+            responseObserver.onCompleted();
+        }
+
+        @Override
+        public void testDeepNestedMessage(DeepNestedCase received, StreamObserver<DeepNestedCase> responseObserver) {
+            validate(received.getRpcCall(), received);
+            var b = DeepNestedCase.newBuilder();
             buildResponse(received.getRpcCall(), b);
             responseObserver.onNext(b.build());
             responseObserver.onCompleted();
