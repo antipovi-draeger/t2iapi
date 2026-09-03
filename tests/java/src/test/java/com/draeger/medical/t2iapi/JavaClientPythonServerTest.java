@@ -59,6 +59,10 @@ class JavaClientPythonServerTest {
         try (BufferedReader stdout = serverProcess.inputReader()) {
             int port = Integer.parseInt(stdout.readLine().trim());
             JavaGrpcClient.run("localhost", port, Common.TEST_DATA_PATH);
+        } finally {
+            if (serverProcess.isAlive()) {
+                serverProcess.destroyForcibly();
+            }
         }
 
         serverProcess.getOutputStream().close();

@@ -54,8 +54,8 @@ public class JavaGrpcClient {
                     IntegrationServiceGrpc.newBlockingStub(channel);
             send(stub, responseResults);
         } finally {
-            Assertions.assertTrue(responseResults.isEmpty(), responseResults.toString());
             channel.shutdown();
+            Assertions.assertTrue(responseResults.isEmpty(), responseResults.toString());
         }
     }
 
