@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 package com.draeger.medical.t2iapi;
 
-import com.draeger.medical.t2iapi.helpers.CommonFunctions;
+import com.draeger.medical.t2iapi.helpers.Common;
 import com.draeger.medical.t2iapi.helpers.JavaGrpcServer;
 
 import org.junit.jupiter.api.Test;
@@ -41,11 +41,11 @@ class PythonClientJavaServerTest {
         assertNotNull(pythonExe, "python.executable system property must be set");
 
         List<String> validationErrors = Collections.synchronizedList(new ArrayList<>());
-        JavaGrpcServer server = new JavaGrpcServer(0, CommonFunctions.TEST_DATA_PATH, validationErrors);
+        JavaGrpcServer server = new JavaGrpcServer(0, Common.TEST_DATA_PATH, validationErrors);
         try {
             int port = server.getPort();
             Process proc = new ProcessBuilder(pythonExe, PYTHON_CLIENT_PY,
-                    "localhost:" + port, CommonFunctions.TEST_DATA_PATH.toString())
+                    "localhost:" + port, Common.TEST_DATA_PATH.toString())
                     .start();
 
             List<String> stderrLines = new ArrayList<>();

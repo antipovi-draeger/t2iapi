@@ -8,23 +8,10 @@ SPDX-License-Identifier: MIT
 package com.draeger.medical.t2iapi.helpers;
 
 import com.draeger.medical.t2iapi.integration.IntegrationServiceGrpc;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.BoolCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.DeepNestedCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.DurationCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.EnumCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.MessageCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.OptionalStringCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.OptionalUint64Case;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.RepeatedEnumCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.RepeatedMessageCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.RepeatedStringCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.StringCase;
-import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.Uint32Case;
-import com.google.gson.JsonElement;
+import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.*;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.util.JsonFormat;
-
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -32,21 +19,22 @@ import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static com.draeger.medical.t2iapi.helpers.Common.TEST_DATA_PATH;
+
 public class JavaGrpcServer {
-    
+
+
     public static void main(String[] args) throws Exception {
         if (args.length > 2) {
             System.err.println("Usage: JavaGrpcServer [port] [testdata_path]");
             System.exit(1);
         }
         int port = args.length >= 1 ? Integer.parseInt(args[0]) : 0;
-        Path testdataPath = args.length >= 2
+        Path testdataPath = args.length == 2
                 ? Path.of(args[1])
-                : Path.of("src/test/resources/integration_scenarios.json").toAbsolutePath().normalize();
+                : TEST_DATA_PATH;
 
         List<String> validationErrors = new java.util.ArrayList<>();
         JavaGrpcServer server = new JavaGrpcServer(port, testdataPath, validationErrors);
@@ -64,9 +52,9 @@ public class JavaGrpcServer {
        Start the integration gRPC server and validate received data.
     */
     public JavaGrpcServer(int port, Path testdataPath, List<String> validationErrors) throws IOException {
-        Map<String, Optional<JsonElement>> cases = CommonFunctions.load_testdata(testdataPath);
+        Common.loadTestData(testdataPath);
         server = ServerBuilder.forPort(port)
-                .addService(new IntegrationServiceImpl(cases, validationErrors))
+                .addService(new IntegrationServiceImpl(validationErrors))
                 .build()
                 .start();
     }
@@ -82,25 +70,23 @@ public class JavaGrpcServer {
     private static class IntegrationServiceImpl
             extends IntegrationServiceGrpc.IntegrationServiceImplBase {
 
-        private final Map<String, Optional<JsonElement>> cases;
         private final List<String> validationErrors;
 
-        IntegrationServiceImpl(Map<String, Optional<JsonElement>> cases, List<String> validationErrors) {
-            this.cases = cases;
+        IntegrationServiceImpl(List<String> validationErrors) {
             this.validationErrors = validationErrors;
         }
 
         /*
-           Check received against the expected scenario return error on missmatch.
+           Check received against the expected scenario, record error on mismatch.
         */
         private void validate(String rpcCall, Message received) {
-            if (!cases.containsKey(rpcCall)) {
+            if (!Common.cases.containsKey(rpcCall)) {
                 validationErrors.add("unknown rpcCall: '" + rpcCall + "'");
                 return;
             }
             try {
                 var builder = received.newBuilderForType();
-                JsonFormat.parser().merge(CommonFunctions.buildItemJson(rpcCall, cases.get(rpcCall)), builder);
+                JsonFormat.parser().merge(Common.buildItemJson(rpcCall, Common.cases.get(rpcCall).value()), builder);
                 Message expected = builder.build();
                 if (!received.equals(expected)) {
                     validationErrors.add("Mismatch for '" + rpcCall + "':\n"
@@ -117,7 +103,7 @@ public class JavaGrpcServer {
         */
         private void buildResponse(String rpcCall, Message.Builder builder) {
             try {
-                CommonFunctions.getExpectedResponseAndMerge(cases, rpcCall, builder);
+                Common.getExpectedResponseAndMerge(rpcCall, builder);
             } catch (InvalidProtocolBufferException e) {
                 validationErrors.add("Parse error building next response for '" + rpcCall + "': " + e.getMessage());
             }

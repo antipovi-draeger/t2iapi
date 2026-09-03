@@ -10,6 +10,7 @@ import typing
 from concurrent import futures
 from google.protobuf import json_format
 
+import common
 from common import build_json, get_expected_response_and_merge, load_testdata, DEFAULT_TEST_DATA_PATH
 from t2iapi.integration import service_pb2_grpc
 
@@ -20,18 +21,17 @@ class IntegrationServiceServicer(service_pb2_grpc.IntegrationServiceServicer):
     def __init__(self, testdata_path, validation_errors):
         """Load scenarios from testdata_path, collect validation errors."""
         self._validation_errors = validation_errors
-        self._cases = load_testdata(testdata_path)
+        load_testdata(testdata_path)
 
     def _validate(self, received):
         """Check received against the stored expected scenario, append any mismatch."""
         received_rpc_call = received.rpc_call
 
-        if received_rpc_call not in self._cases:
+        entry = common.cases.get(received_rpc_call)
+        if entry is None:
             self._validation_errors.append(f"unknown rpcCall: '{received_rpc_call}'")
             return
-
-        scenario = self._cases[received_rpc_call]
-        expected = json_format.Parse(build_json(received_rpc_call, scenario), type(received)())
+        expected = json_format.Parse(build_json(received_rpc_call, entry.scenario), type(received)())
 
         if received != expected:
             self._validation_errors.append(
@@ -43,7 +43,7 @@ class IntegrationServiceServicer(service_pb2_grpc.IntegrationServiceServicer):
     def _build_next_response(self, received):
         """Parse the next scenario into a new message instance."""
         try:
-            return get_expected_response_and_merge(self._cases, received.rpc_call, type(received)())
+            return get_expected_response_and_merge(received.rpc_call, type(received)())
         except Exception as e:
             self._validation_errors.append(f"Parse error building next response for '{received.rpc_call}': {e}")
             return type(received)()

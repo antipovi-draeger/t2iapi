@@ -17,47 +17,52 @@ import com.google.protobuf.util.JsonFormat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class CommonFunctions {
+public class Common {
+
+    record ScenarioEntry(Optional<JsonElement> value, String successor) { }
 
     public static final Path TEST_DATA_PATH = Path.of("src/test/resources/integration_scenarios.json")
             .toAbsolutePath().normalize();
+    static Map<String, ScenarioEntry> cases;
 
-    private CommonFunctions() {
+    private Common() {
     }
 
     /*
-       Read the JSON and index each scenario by its rpcCall.
+       Read the JSON and populate the cases map. Each entry carries its expected value and the rpcCall of the
+       next scenario .
     */
-    static Map<String, Optional<JsonElement>> load_testdata(Path testDataPath) throws IOException {
+    static void loadTestData(Path testDataPath) throws IOException {
         String json = Files.readString(testDataPath);
-        Map<String, Optional<JsonElement>> cases = new LinkedHashMap<>();
+        Map<String, ScenarioEntry> result = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> type : JsonParser.parseString(json).getAsJsonObject().entrySet()) {
+            List<String> keys = new ArrayList<>();
+            List<Optional<JsonElement>> values = new ArrayList<>();
             for (JsonElement element : type.getValue().getAsJsonArray()) {
                 JsonObject scenario = element.getAsJsonObject();
-                String rpcCall = type.getKey() + "_" + scenario.get("suffix").getAsString();
-                cases.put(rpcCall, scenario.has("expected") ? Optional.of(scenario.get("expected")) : Optional.empty());
+                keys.add(type.getKey() + "_" + scenario.get("suffix").getAsString());
+                values.add(scenario.has("expected") ? Optional.of(scenario.get("expected")) : Optional.empty());
+            }
+            for (int i = 0; i < keys.size(); i++) {
+                result.put(keys.get(i), new ScenarioEntry(values.get(i), keys.get((i + 1) % keys.size())));
             }
         }
-        return cases;
+        cases = result;
     }
 
     /*
-       Resolve the next rpcCall in rpcCall's type group and merge its scenario into builder.
+       Merge the scenario that follows rpcCall in its type group into builder.
     */
-    static void getExpectedResponseAndMerge(Map<String, Optional<JsonElement>> cases, String rpcCall, Message.Builder builder)
+    static void getExpectedResponseAndMerge(String rpcCall, Message.Builder builder)
             throws InvalidProtocolBufferException {
-        String prefix = rpcCall.split("_")[0] + "_";
-        var group = cases.keySet().stream().filter(k -> k.startsWith(prefix)).toList();
-        int idx = group.indexOf(rpcCall);
-        if (idx < 0) {
-            throw new IllegalStateException("No next key found for " + rpcCall + ", this should not happen.");
-        }
-        var nextKey = group.get((idx + 1) % group.size());
-        JsonFormat.parser().merge(buildItemJson(nextKey, cases.get(nextKey)), builder);
+        var nextKey = cases.get(rpcCall).successor();
+        JsonFormat.parser().merge(buildItemJson(nextKey, cases.get(nextKey).value()), builder);
     }
 
     /*

@@ -9,19 +9,20 @@ import grpc
 import sys
 from google.protobuf import json_format
 
-from common import DEFAULT_TEST_DATA_PATH
-from common import build_json, load_testdata
+import common
+from common import DEFAULT_TEST_DATA_PATH, build_json, load_testdata
 from t2iapi.integration import service_pb2
 from t2iapi.integration import service_pb2_grpc
 
 
-def _validate(cases, received):
+def _validate(received):
     """Return an error string if received does not match its scenario in cases, else empty string."""
     received_rpc_call = received.rpc_call
-    if received_rpc_call not in cases:
+    entry = common.cases.get(received_rpc_call)
+    if entry is None:
         return f"Unknown rpcCall in response: '{received_rpc_call}'"
     try:
-        expected = json_format.Parse(build_json(received_rpc_call, cases[received_rpc_call]), type(received)())
+        expected = json_format.Parse(build_json(received_rpc_call, entry.scenario), type(received)())
         if received != expected:
             return (f"Validation failed for rpcCall: '{received_rpc_call}'\n"
                     f"expected: {str(expected).rstrip()}\n"
@@ -31,7 +32,7 @@ def _validate(cases, received):
     return ""
 
 
-def _send_and_validate_response(stub, cases, rpc_call, item_json):
+def _send_and_validate_response(stub, rpc_call, item_json):
     """Dispatch rpc_call to the matching stub method, validate the response, and return any error string."""
     if rpc_call.startswith('TestRepeatedString'):
         response = stub.TestRepeatedString(json_format.Parse(item_json, service_pb2.RepeatedStringCase()))
@@ -59,18 +60,18 @@ def _send_and_validate_response(stub, cases, rpc_call, item_json):
         response = stub.TestDeepNestedMessage(json_format.Parse(item_json, service_pb2.DeepNestedCase()))
     else:
         raise ValueError(f"No RPC mapped for rpcCall: '{rpc_call}'")
-    return _validate(cases, response)
+    return _validate(response)
 
 
 def run(server_address, testdata_path):
     """Connect to server_address, send all test scenarios, and raise on any validation error."""
-    cases = load_testdata(testdata_path)
+    load_testdata(testdata_path)
     errors = []
 
     with grpc.insecure_channel(server_address) as channel:
         stub = service_pb2_grpc.IntegrationServiceStub(channel)
-        for rpc_call, scenario in cases.items():
-            error = _send_and_validate_response(stub, cases, rpc_call, build_json(rpc_call, scenario))
+        for rpc_call, entry in common.cases.items():
+            error = _send_and_validate_response(stub, rpc_call, build_json(rpc_call, entry.scenario))
             if error:
                 errors.append(error)
 

@@ -9,7 +9,6 @@ package com.draeger.medical.t2iapi.helpers;
 
 import com.draeger.medical.t2iapi.integration.IntegrationServiceGrpc;
 import com.draeger.medical.t2iapi.integration.IntegrationServiceProto.*;
-import com.google.gson.JsonElement;
 import com.google.protobuf.Message;
 import com.google.protobuf.util.JsonFormat;
 import io.grpc.ManagedChannel;
@@ -18,9 +17,8 @@ import org.junit.jupiter.api.Assertions;
 
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 
-import static com.draeger.medical.t2iapi.helpers.CommonFunctions.TEST_DATA_PATH;
+import static com.draeger.medical.t2iapi.helpers.Common.TEST_DATA_PATH;
 
 public class JavaGrpcClient {
 
@@ -34,20 +32,19 @@ public class JavaGrpcClient {
         if (args.length == 2) {
             testdataPath = Path.of(args[1]);
         }
+        String[] parts = serverAddress.split(":", 2);
+        String host = parts[0];
+        int port = Integer.parseInt(parts[1]);
 
-        run(serverAddress, testdataPath);
+        run(host, port, testdataPath);
     }
 
     /*
        Connect to Grpc server and send all test scenarios, assert no validation errors occurred.
     */
-    public static void run(String serverAddress, Path testdataPath) throws Exception {
-        Map<String, Optional<JsonElement>> cases = CommonFunctions.load_testdata(testdataPath);
+    public static void run(String host, int port, Path testdataPath) throws Exception {
+        Common.loadTestData(testdataPath);
         var responseResults = new StringBuilder();
-
-        String[] parts = serverAddress.split(":", 2);
-        String host = parts[0];
-        int port = Integer.parseInt(parts[1]);
 
         ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
@@ -55,7 +52,7 @@ public class JavaGrpcClient {
         try {
             IntegrationServiceGrpc.IntegrationServiceBlockingStub stub =
                     IntegrationServiceGrpc.newBlockingStub(channel);
-            send(stub, cases, responseResults);
+            send(stub, responseResults);
         } finally {
             Assertions.assertTrue(responseResults.isEmpty(), responseResults.toString());
             channel.shutdown();
@@ -65,13 +62,10 @@ public class JavaGrpcClient {
     /*
        Compare received against the next scenario in the scenario type group, return an error string or empty.
     */
-    private static String validateResponse(
-            String rpcCall,
-            Message received,
-            Map<String, Optional<JsonElement>> cases) {
+    private static String validateResponse(String rpcCall, Message received) {
         try {
             var builder = received.newBuilderForType();
-            CommonFunctions.getExpectedResponseAndMerge(cases, rpcCall, builder);
+            Common.getExpectedResponseAndMerge(rpcCall, builder);
             Message expected = builder.build();
             if (!received.equals(expected)) {
                 return "Validation failed for rpcCall: " + rpcCall + "\nexpected: " + expected + "received: " +
@@ -88,11 +82,10 @@ public class JavaGrpcClient {
     */
     private static void send(
             IntegrationServiceGrpc.IntegrationServiceBlockingStub stub,
-            Map<String, Optional<JsonElement>> cases,
             StringBuilder errors) throws Exception {
-        for (Map.Entry<String, Optional<JsonElement>> entry : cases.entrySet()) {
+        for (Map.Entry<String, Common.ScenarioEntry> entry : Common.cases.entrySet()) {
             String rpcCall = entry.getKey();
-            String itemJson = CommonFunctions.buildItemJson(rpcCall, entry.getValue());
+            String itemJson = Common.buildItemJson(rpcCall, entry.getValue().value());
             final Message result;
             if (rpcCall.startsWith("TestRepeatedString")) {
                 var b = RepeatedStringCase.newBuilder();
@@ -145,7 +138,7 @@ public class JavaGrpcClient {
             } else {
                 throw new IllegalArgumentException("No RPC mapped for rpcCall: '" + rpcCall + "'");
             }
-            errors.append(validateResponse(rpcCall, result, cases));
+            errors.append(validateResponse(rpcCall, result));
         }
     }
 }

@@ -7,13 +7,12 @@ SPDX-License-Identifier: MIT
 
 package com.draeger.medical.t2iapi;
 
-import com.draeger.medical.t2iapi.helpers.CommonFunctions;
+import com.draeger.medical.t2iapi.helpers.Common;
 import com.draeger.medical.t2iapi.helpers.JavaGrpcClient;
 
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +40,7 @@ class JavaClientPythonServerTest {
         assertNotNull(pythonExe, "python.executable system property must be set");
 
         Process serverProcess =
-                new ProcessBuilder(pythonExe, PYTHON_GRPC_SERVER_PY, "0", CommonFunctions.TEST_DATA_PATH.toString())
+                new ProcessBuilder(pythonExe, PYTHON_GRPC_SERVER_PY, "0", Common.TEST_DATA_PATH.toString())
                         .start();
 
         List<String> stderrLines = new ArrayList<>();
@@ -58,8 +57,8 @@ class JavaClientPythonServerTest {
         stderrReader.start();
 
         try (BufferedReader stdout = serverProcess.inputReader()) {
-            String port = stdout.readLine().trim();
-            JavaGrpcClient.run("localhost:" + port, CommonFunctions.TEST_DATA_PATH);
+            int port = Integer.parseInt(stdout.readLine().trim());
+            JavaGrpcClient.run("localhost", port, Common.TEST_DATA_PATH);
         }
 
         serverProcess.getOutputStream().close();

@@ -7,22 +7,33 @@
 
 import json
 import pathlib
+from dataclasses import dataclass
 
 from google.protobuf import json_format
 
 DEFAULT_TEST_DATA_PATH = (pathlib.Path(__file__).resolve().parent.parent
                           / 'java' / 'src' / 'test' / 'resources' / 'integration_scenarios.json')
 
+cases = {}
+
+
+@dataclass
+class ScenarioEntry:
+    scenario: dict
+    successor: str
+
 
 def load_testdata(testdata_path):
-    """Read the JSON and index each scenario by its rpcCall."""
+    """Read the JSON and populate the module-level cases dict with pre-computed round-robin successors."""
+    global cases
     with open(testdata_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    cases = {}
+    result = {}
     for type_name, type_scenarios in data.items():
-        for scenario in type_scenarios:
-            cases[f"{type_name}_{scenario['suffix']}"] = scenario
-    return cases
+        keys = [f"{type_name}_{s['suffix']}" for s in type_scenarios]
+        for i, (key, scenario) in enumerate(zip(keys, type_scenarios)):
+            result[key] = ScenarioEntry(scenario=scenario, successor=keys[(i + 1) % len(keys)])
+    cases = result
 
 
 def build_json(rpc_call, scenario):
@@ -32,11 +43,7 @@ def build_json(rpc_call, scenario):
     return json.dumps({'rpcCall': rpc_call, 'expected': scenario['expected']})
 
 
-def get_expected_response_and_merge(cases, rpc_call, msg):
-    """Resolve the next rpcCall in rpc_call's type group (wraps around) and parse its scenario into msg."""
-    prefix = rpc_call.split('_')[0] + '_'
-    group = [k for k in cases if k.startswith(prefix)]
-    idx = group.index(rpc_call) if rpc_call in group else -1
-    assert idx >= 0, f"No next key found for {rpc_call}, this should not happen."
-    next_key = group[(idx + 1) % len(group)]
-    return json_format.Parse(build_json(next_key, cases[next_key]), msg)
+def get_expected_response_and_merge(rpc_call, msg):
+    """Parse the scenario that follows rpc_call in its type group into msg."""
+    next_key = cases[rpc_call].successor
+    return json_format.Parse(build_json(next_key, cases[next_key].scenario), msg)
