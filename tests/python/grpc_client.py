@@ -69,8 +69,8 @@ def run(server_address, testdata_path):
 
     with grpc.insecure_channel(server_address) as channel:
         stub = service_pb2_grpc.IntegrationServiceStub(channel)
-        for rpc_call, raw in cases.items():
-            error = _send_and_validate_response(stub, cases, rpc_call, build_json(rpc_call, raw))
+        for rpc_call, scenario in cases.items():
+            error = _send_and_validate_response(stub, cases, rpc_call, build_json(rpc_call, scenario))
             if error:
                 errors.append(error)
 

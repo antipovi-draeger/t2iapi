@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class JavaGrpcServer {
@@ -63,7 +64,7 @@ public class JavaGrpcServer {
        Start the integration gRPC server and validate received data.
     */
     public JavaGrpcServer(int port, Path testdataPath, List<String> validationErrors) throws IOException {
-        Map<String, JsonElement> cases = CommonFunctions.load(testdataPath);
+        Map<String, Optional<JsonElement>> cases = CommonFunctions.load_testdata(testdataPath);
         server = ServerBuilder.forPort(port)
                 .addService(new IntegrationServiceImpl(cases, validationErrors))
                 .build()
@@ -81,10 +82,10 @@ public class JavaGrpcServer {
     private static class IntegrationServiceImpl
             extends IntegrationServiceGrpc.IntegrationServiceImplBase {
 
-        private final Map<String, JsonElement> cases;
+        private final Map<String, Optional<JsonElement>> cases;
         private final List<String> validationErrors;
 
-        IntegrationServiceImpl(Map<String, JsonElement> cases, List<String> validationErrors) {
+        IntegrationServiceImpl(Map<String, Optional<JsonElement>> cases, List<String> validationErrors) {
             this.cases = cases;
             this.validationErrors = validationErrors;
         }

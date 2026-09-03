@@ -8,7 +8,6 @@ SPDX-License-Identifier: MIT
 package com.draeger.medical.t2iapi.helpers;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -20,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class CommonFunctions {
 
@@ -30,16 +30,16 @@ public class CommonFunctions {
     }
 
     /*
-       Read the JSON and index each scenario by its rpcCall (TypeName_suffix).
+       Read the JSON and index each scenario by its rpcCall.
     */
-    static Map<String, JsonElement> load(Path testDataPath) throws IOException {
+    static Map<String, Optional<JsonElement>> load_testdata(Path testDataPath) throws IOException {
         String json = Files.readString(testDataPath);
-        Map<String, JsonElement> cases = new LinkedHashMap<>();
+        Map<String, Optional<JsonElement>> cases = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> type : JsonParser.parseString(json).getAsJsonObject().entrySet()) {
             for (JsonElement element : type.getValue().getAsJsonArray()) {
                 JsonObject scenario = element.getAsJsonObject();
                 String rpcCall = type.getKey() + "_" + scenario.get("suffix").getAsString();
-                cases.put(rpcCall, scenario.has("expected") ? scenario.get("expected") : JsonNull.INSTANCE);
+                cases.put(rpcCall, scenario.has("expected") ? Optional.of(scenario.get("expected")) : Optional.empty());
             }
         }
         return cases;
@@ -48,7 +48,7 @@ public class CommonFunctions {
     /*
        Resolve the next rpcCall in rpcCall's type group and merge its scenario into builder.
     */
-    static void getExpectedResponseAndMerge(Map<String, JsonElement> cases, String rpcCall, Message.Builder builder)
+    static void getExpectedResponseAndMerge(Map<String, Optional<JsonElement>> cases, String rpcCall, Message.Builder builder)
             throws InvalidProtocolBufferException {
         String prefix = rpcCall.split("_")[0] + "_";
         var group = cases.keySet().stream().filter(k -> k.startsWith(prefix)).toList();
@@ -61,14 +61,12 @@ public class CommonFunctions {
     }
 
     /*
-       Build the test case JSON, omit expected for _not_present cases and set it to null for _null cases.
+       Build the test case JSON. Absent Optional means the expected key is omitted entirely.
     */
-    static String buildItemJson(String rpcCall, JsonElement raw) {
+    static String buildItemJson(String rpcCall, Optional<JsonElement> raw) {
         JsonObject obj = new JsonObject();
         obj.addProperty("rpcCall", rpcCall);
-        if (!rpcCall.endsWith("_not_present")) {
-            obj.add("expected", rpcCall.endsWith("_null") ? JsonNull.INSTANCE : raw);
-        }
+        raw.ifPresent(e -> obj.add("expected", e));
         return obj.toString();
     }
 }

@@ -64,14 +64,15 @@ The scenario file is a JSON object keyed by type name. Each type holds an ordere
 each with a `suffix` and an optional `expected` value. The full set of scenarios is in
 [`tests/java/src/test/resources/integration_scenarios.json`](java/src/test/resources/integration_scenarios.json).
 
-The suffix controls how the `expected` field is serialized before sending:
+The `suffix` is a human-readable label that, combined with the type name, forms a unique RPC call
+identifier (e.g. `TestString_populated`). The `expected` field controls what the scenario sends:
 
-- **`_not_present`** — the `expected` key is omitted from the JSON entirely, producing the proto3 default.
-- **`_null`** — the `expected` key is set to `null`. For wrapper types (`StringValue`, `UInt64Value`) this
-  leaves the field unset; for scalar types the result is the proto3 default.
-- **anything else** — the `expected` key carries the scenario value normally.
+- no `expected` key - the field is omitted entirely, producing the proto3 default.
+- **`null`** - for wrapper types (`StringValue`, `UInt64Value`) this leaves the field unset;
+  for scalar types the result is the proto3 default.
+- **any other value** - the field is set to that value.
 
-The `_null` and `_not_present` cases exist to verify that both ways of expressing an absent field in
+The `null` and absent cases exist to verify that both ways of expressing an absent field in
 JSON are handled identically by the parser on each side.
 
 ### Running the tests

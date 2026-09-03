@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Assertions;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.draeger.medical.t2iapi.helpers.CommonFunctions.TEST_DATA_PATH;
 
@@ -41,7 +42,7 @@ public class JavaGrpcClient {
        Connect to Grpc server and send all test scenarios, assert no validation errors occurred.
     */
     public static void run(String serverAddress, Path testdataPath) throws Exception {
-        Map<String, JsonElement> cases = CommonFunctions.load(testdataPath);
+        Map<String, Optional<JsonElement>> cases = CommonFunctions.load_testdata(testdataPath);
         var responseResults = new StringBuilder();
 
         String[] parts = serverAddress.split(":", 2);
@@ -67,7 +68,7 @@ public class JavaGrpcClient {
     private static String validateResponse(
             String rpcCall,
             Message received,
-            Map<String, JsonElement> cases) {
+            Map<String, Optional<JsonElement>> cases) {
         try {
             var builder = received.newBuilderForType();
             CommonFunctions.getExpectedResponseAndMerge(cases, rpcCall, builder);
@@ -87,9 +88,9 @@ public class JavaGrpcClient {
     */
     private static void send(
             IntegrationServiceGrpc.IntegrationServiceBlockingStub stub,
-            Map<String, JsonElement> cases,
+            Map<String, Optional<JsonElement>> cases,
             StringBuilder errors) throws Exception {
-        for (Map.Entry<String, JsonElement> entry : cases.entrySet()) {
+        for (Map.Entry<String, Optional<JsonElement>> entry : cases.entrySet()) {
             String rpcCall = entry.getKey();
             String itemJson = CommonFunctions.buildItemJson(rpcCall, entry.getValue());
             final Message result;

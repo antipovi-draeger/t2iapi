@@ -10,30 +10,26 @@ import pathlib
 
 from google.protobuf import json_format
 
-_NO_EXPECTED = '_not_present'
-
 DEFAULT_TEST_DATA_PATH = (pathlib.Path(__file__).resolve().parent.parent
                           / 'java' / 'src' / 'test' / 'resources' / 'integration_scenarios.json')
 
 
 def load_testdata(testdata_path):
-    """Parse the scenarios JSON and return {rpcCall: raw_expected} for every scenario."""
+    """Read the JSON and index each scenario by its rpcCall."""
     with open(testdata_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     cases = {}
     for type_name, type_scenarios in data.items():
         for scenario in type_scenarios:
-            cases[f"{type_name}_{scenario['suffix']}"] = scenario.get('expected')
+            cases[f"{type_name}_{scenario['suffix']}"] = scenario
     return cases
 
 
-def build_json(rpc_call, raw):
-    """Build proto3 JSON; omits expected for _not_present, sets null for _null."""
-    if rpc_call.endswith(_NO_EXPECTED):
+def build_json(rpc_call, scenario):
+    """Build proto3 JSON. Omits expected if the key is absent in the scenario."""
+    if 'expected' not in scenario:
         return json.dumps({'rpcCall': rpc_call})
-    if rpc_call.endswith('_null'):
-        return json.dumps({'rpcCall': rpc_call, 'expected': None})
-    return json.dumps({'rpcCall': rpc_call, 'expected': raw})
+    return json.dumps({'rpcCall': rpc_call, 'expected': scenario['expected']})
 
 
 def get_expected_response_and_merge(cases, rpc_call, msg):

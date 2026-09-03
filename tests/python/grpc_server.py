@@ -30,8 +30,8 @@ class IntegrationServiceServicer(service_pb2_grpc.IntegrationServiceServicer):
             self._validation_errors.append(f"unknown rpcCall: '{received_rpc_call}'")
             return
 
-        raw = self._cases[received_rpc_call]
-        expected = json_format.Parse(build_json(received_rpc_call, raw), type(received)())
+        scenario = self._cases[received_rpc_call]
+        expected = json_format.Parse(build_json(received_rpc_call, scenario), type(received)())
 
         if received != expected:
             self._validation_errors.append(
