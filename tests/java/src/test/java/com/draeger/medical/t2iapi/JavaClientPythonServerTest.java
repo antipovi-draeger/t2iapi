@@ -59,16 +59,15 @@ class JavaClientPythonServerTest {
         try (BufferedReader stdout = serverProcess.inputReader()) {
             int port = Integer.parseInt(stdout.readLine().trim());
             JavaGrpcClient.run("localhost", port, Common.TEST_DATA_PATH);
+            serverProcess.getOutputStream().close();
+            stderrReader.join(5000);
         } finally {
             if (serverProcess.isAlive()) {
                 serverProcess.destroyForcibly();
             }
         }
 
-        serverProcess.getOutputStream().close();
         boolean finished = serverProcess.waitFor(30, TimeUnit.SECONDS);
-        stderrReader.join(5000);
-
         assertTrue(finished, "Python server subprocess timed out after 30 seconds");
         assertEquals(0, serverProcess.exitValue(),
                 "Python server validation errors:\n" + String.join("\n", stderrLines));
