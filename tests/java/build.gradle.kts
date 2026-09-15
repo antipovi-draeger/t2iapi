@@ -27,6 +27,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.1")
     testImplementation("io.grpc:grpc-netty-shaded:${grpcVersion}")
     testImplementation("com.google.protobuf:protobuf-java-util:${protocVersion}")
+    testImplementation("com.google.code.gson:gson:2.14.0")
     testImplementation("com.draeger.medical:t2iapi:${t2iapiVersion}")
 }
 
