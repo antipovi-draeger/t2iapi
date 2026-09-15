@@ -58,8 +58,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: actions/download-artifact@v4
         with:
-          name: integration-test-results
+          pattern: integration-test-results-*
           path: release/test_results/
+          merge-multiple: true
 
       - name: Zip jar files
         if: startsWith(github.ref, 'refs/tags/')
