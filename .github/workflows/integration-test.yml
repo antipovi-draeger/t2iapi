@@ -28,13 +28,13 @@ jobs:
       - name: run unit tests
         run: python ./tests/python/html_report.py
       - name: Archive freeze information
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: freeze
           path: pip_freeze.txt
           retention-days: 1
       - name: Archive test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: html_unit_test
           path: unittest_results/*.html
@@ -95,7 +95,7 @@ jobs:
 
       - name: Archive test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: integration-test-results-java${{ matrix.java-version }}-py${{ matrix.python-version }}
           path: tests/java/build/reports/tests/test/**/*.*

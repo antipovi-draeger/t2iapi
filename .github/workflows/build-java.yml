@@ -48,7 +48,7 @@ jobs:
         run: mv pom-default.xml ./../../libs/t2iapi-${{ env.BASE_PACKAGE_VERSION }}.${{ github.run_number }}-SNAPSHOT.pom
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: target_jars
           path: java/build
