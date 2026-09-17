@@ -41,13 +41,18 @@ dependencies {
         // see: https://github.com/grpc/grpc-java/issues/3633
         api("javax.annotation:javax.annotation-api:1.3.2")
     }
-
-    add("protobuf", files("../src"))
 }
 
-tasks.compileJava {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+sourceSets {
+    main {
+        proto {
+            srcDir("../src")
+        }
+    }
+}
+
+tasks.withType(JavaCompile::class) {
+    options.release = 17
 }
 
 java {

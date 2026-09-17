@@ -13,7 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- gradle version to 9.7.1
 - gRPC version to 1.84.0
 - java protoc version to 4.34.2
 - python protoc version to 7.36.1
